@@ -1045,7 +1045,7 @@ function renderTxTable(){
     <td><span class="pill ${t.tipo==='Receita'?'p-rec':'p-desp'}">${t.tipo}</span></td>
     <td style="text-align:right;font-weight:600;color:${t.tipo==='Receita'?'var(--teal)':'var(--red)'}">${fmt(t.valor)}</td>
     <td style="text-align:center;white-space:nowrap">
-      ${t.doc?`<button class="btn btn-sm btn-icon" onclick="viewDoc(${t.id})" title="Ver documento" style="color:var(--amber);background:var(--amber-l);border-color:var(--amber-l)"><i class="ti ti-file" style="font-size:11px"></i></button>
+      ${t.hasDoc?`<button class="btn btn-sm btn-icon" onclick="viewDoc(${t.id})" title="Ver documento" style="color:var(--amber);background:var(--amber-l);border-color:var(--amber-l)"><i class="ti ti-file" style="font-size:11px"></i></button>
       <button class="btn btn-sm btn-icon" onclick="saveDocToDrive(${t.id})" title="Guardar no Drive" style="color:var(--teal);background:var(--teal-l);border-color:var(--teal-l)"><i class="ti ti-brand-google-drive" style="font-size:11px"></i></button>`:''}
       <button class="btn btn-sm btn-icon btn-edit" onclick="editTx(${t.id})" title="Corrigir"><i class="ti ti-pencil" style="font-size:12px"></i></button>
       <button class="btn btn-sm btn-icon btn-del" onclick="deleteTx(${t.id})" title="Apagar"><i class="ti ti-trash" style="font-size:12px"></i></button>
@@ -1084,17 +1084,18 @@ function editTx(id){
   document.getElementById('f-empregado').innerHTML='<option value="">— Nenhum —</option>'+emps.map(e=>`<option value="${e.nome}"${e.nome===t.empregado?' selected':''}>${e.nome}</option>`).join('');
   refreshCatSelect(t.cat);refreshContaSelect(t.conta);
   // Restaurar documento se existir
-  if(t.doc){
-    docData=t.doc;
+  const existingDoc=loadDocLocal(id);
+  if(existingDoc){
+    docData=existingDoc;
     document.getElementById('docEmpty').style.display='none';
     document.getElementById('docPreview').style.display='block';
-    document.getElementById('docName').textContent=t.doc.nome||'Documento';
-    if(t.doc.tipo&&t.doc.tipo.startsWith('image/')){
-      document.getElementById('docImg').src=t.doc.data;
+    document.getElementById('docName').textContent=existingDoc.nome||'Documento';
+    if(existingDoc.tipo&&existingDoc.tipo.startsWith('image/')){
+      document.getElementById('docImg').src=existingDoc.data;
       document.getElementById('docImg').style.display='block';
     } else {
       document.getElementById('docImg').style.display='none';
-      document.getElementById('docName').textContent='📄 '+(t.doc.nome||'Documento');
+      document.getElementById('docName').textContent='📄 '+(existingDoc.nome||'Documento');
     }
   } else {
     resetDocUpload();
@@ -1138,6 +1139,16 @@ function refreshContaSelect(sel){
   }
   s.innerHTML=html||'<option value="">— Seleciona local —</option>';
 }
+function saveDocLocal(txId, doc){
+  if(!doc)return;
+  try{localStorage.setItem('rv_doc_'+txId, JSON.stringify(doc));}catch(e){console.error('Doc muito grande para guardar:',e);}
+}
+function loadDocLocal(txId){
+  try{const d=localStorage.getItem('rv_doc_'+txId);return d?JSON.parse(d):null;}catch(e){return null;}
+}
+function deleteDocLocal(txId){
+  try{localStorage.removeItem('rv_doc_'+txId);}catch(e){}
+}
 function saveTx(){
   const tipo=document.getElementById('f-tipo').value,data=document.getElementById('f-data').value,mes=document.getElementById('f-mes').value;
   const ano=parseInt(document.getElementById('f-ano').value)||new Date().getFullYear();
@@ -1153,12 +1164,27 @@ function saveTx(){
   const notasFinal=splitAtivo?(notas?notas+' ['+pct+'% partilhado]':'Receita partilhada a '+pct+'%'):notas;
   if(editTxId){
     const i=txList.findIndex(x=>x.id===editTxId);
-    txList[i]={...txList[i],tipo,data,mes,ano,valor:valorFinal,cat,conta,notas:notasFinal,meio,empregado,doc:docData!==null?docData:txList[i].doc};
+    const docFinal=docData!==null?docData:loadDocLocal(editTxId);
+    txList[i]={...txList[i],tipo,data,mes,ano,valor:valorFinal,cat,conta,notas:notasFinal,meio,empregado,hasDoc:!!docFinal};
+    if(docData)saveDocLocal(editTxId,docData);
     saveToLocal();supaUpdate('lancamentos',editTxId,txList[i]).then(()=>showSyncStatus('Lançamento atualizado!'));
   } else {
-    const novo={tipo,cat,conta,mes,ano,valor:valorFinal,data,notas:notasFinal,meio,empregado};
-    const novoTx={...novo,id:nextId++,doc:docData};txList.push(novoTx);
-    saveToLocal();supaInsert('lancamentos',novo).then(r=>{if(r&&r[0])txList[txList.length-1].id=r[0].id;showSyncStatus('Lançamento guardado!');});closeTxModal();renderTxTable();renderDashboard();populateFilters();return;
+    const novo={tipo,cat,conta,mes,ano,valor:valorFinal,data,notas:notasFinal,meio,empregado,hasDoc:!!docData};
+    const newId=nextId++;
+    const novoTx={...novo,id:newId};
+    txList.push(novoTx);
+    if(docData)saveDocLocal(newId,docData);
+    saveToLocal();
+    supaInsert('lancamentos',novo).then(r=>{
+      if(r&&r[0]){
+        const oldId=newId;
+        txList[txList.length-1].id=r[0].id;
+        // move doc to new id
+        if(docData){saveDocLocal(r[0].id,docData);deleteDocLocal(oldId);}
+      }
+      showSyncStatus('Lançamento guardado!');
+    });
+    closeTxModal();renderTxTable();renderDashboard();populateFilters();return;
   }
   closeTxModal();renderTxTable();renderDashboard();populateFilters();
 }
@@ -1607,28 +1633,28 @@ function resetDocUpload(){
   const di=document.getElementById('docImg');if(di)di.src='';
 }
 function viewDoc(txId){
-  const t=txList.find(x=>x.id===txId);if(!t||!t.doc)return;
-  // Mostra documento num modal em vez de nova janela
+  const doc=loadDocLocal(txId);
+  if(!doc){showSyncStatus('Documento não encontrado',false);return;}
   let modal=document.getElementById('docViewModal');
   if(!modal){
     modal=document.createElement('div');
     modal.id='docViewModal';
     modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:500;display:flex;align-items:center;justify-content:center;padding:1rem';
-    modal.onclick=()=>modal.style.display='none';
+    modal.onclick=(e)=>{if(e.target===modal)modal.style.display='none';};
     document.body.appendChild(modal);
   }
-  if(t.doc.tipo&&t.doc.tipo.startsWith('image/')){
+  if(doc.tipo&&doc.tipo.startsWith('image/')){
     modal.innerHTML=`<div style="position:relative;max-width:90vw;max-height:90vh">
-      <img src="${t.doc.data}" style="max-width:90vw;max-height:85vh;object-fit:contain;border-radius:8px">
-      <div style="text-align:center;color:#fff;font-size:12px;margin-top:8px">${t.doc.nome} · Clica para fechar</div>
+      <img src="${doc.data}" style="max-width:90vw;max-height:85vh;object-fit:contain;border-radius:8px">
+      <div style="text-align:center;color:#fff;font-size:12px;margin-top:8px">${doc.nome} · Clica fora para fechar</div>
     </div>`;
   } else {
     modal.innerHTML=`<div style="background:#fff;border-radius:12px;width:90vw;height:90vh;display:flex;flex-direction:column;overflow:hidden">
       <div style="padding:10px 14px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:13px;font-weight:600">📄 ${t.doc.nome}</span>
+        <span style="font-size:13px;font-weight:600">📄 ${doc.nome}</span>
         <button onclick="document.getElementById('docViewModal').style.display='none'" style="border:none;background:none;cursor:pointer;font-size:18px">×</button>
       </div>
-      <iframe src="${t.doc.data}" style="flex:1;border:none"></iframe>
+      <iframe src="${doc.data}" style="flex:1;border:none"></iframe>
     </div>`;
   }
   modal.style.display='flex';
@@ -2220,10 +2246,11 @@ async function uploadToGDrive(fileData, fileName, mimeType){
 }
 
 async function saveDocToDrive(txId){
+  const doc=loadDocLocal(txId);
+  if(!doc){showSyncStatus('Sem documento para guardar',false);return;}
   const t=txList.find(x=>x.id===txId);
-  if(!t||!t.doc){showSyncStatus('Sem documento para guardar',false);return;}
-  const fileName=`RV_${t.data}_${t.cat}_${t.doc.nome||'documento'}`;
-  await uploadToGDrive(t.doc.data,fileName,t.doc.tipo||'image/jpeg');
+  const fileName=`RV_${t?t.data:'doc'}_${t?t.cat:''}_${doc.nome||'documento'}`;
+  await uploadToGDrive(doc.data,fileName,doc.tipo||'image/jpeg');
 }
 window.onload = function(){
   loadFromLocal();
