@@ -1829,7 +1829,7 @@ function importarExcel(e){
 
 /* ---- SUPABASE ---- */
 const SUPA_URL='https://fvhzuxiomzipxwdwedfj.supabase.co';
-const SUPA_KEY='sb_publishable_IHAzC5IEc-yZskVTEFQogA_oVDJ02fI';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2aHp1eGlvbXppcHh3ZHdlZGZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NDQyMjMsImV4cCI6MjA5NzIyMDIyM30.AWAathuHSzHx9fc_dh52Hv_ZGiDaDhCsj_AgpBMRqTE';
 
 async function supaFetch(table,method='GET',body=null,filter=null){
   let url=`${SUPA_URL}/rest/v1/${table}`;
@@ -1840,9 +1840,17 @@ async function supaFetch(table,method='GET',body=null,filter=null){
   try{
     const res=await fetch(url,opts);
     const text=await res.text();
-    if(!res.ok){console.error('Supabase error:',res.status,text);return null;}
+    if(!res.ok){
+      console.error('Supabase error:',res.status,text);
+      showSyncStatus('Erro Supabase: '+res.status,false);
+      return null;
+    }
     return text?JSON.parse(text):true;
-  }catch(e){console.error('Fetch error:',e);return null;}
+  }catch(e){
+    console.error('Fetch error:',e.message);
+    showSyncStatus('Sem ligação ao Supabase',false);
+    return null;
+  }
 }
 async function supaGet(table){return supaFetch(table,'GET',null,'order=id.asc');}
 async function supaInsert(table,data){const d={...data};delete d.id;return supaFetch(table,'POST',d);}
