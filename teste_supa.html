@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Teste Supabase</title></head>
+<body>
+<h2>Teste Supabase</h2>
+<div id="resultado" style="font-size:18px;padding:20px;background:#eee;margin:20px">A testar...</div>
+<script>
+const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2aHp1eGlvbXppcHh3ZHdlZGZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NDQyMjMsImV4cCI6MjA5NzIyMDIyM30.AWAathuHSzHx9fc_dh52Hv_ZGiDaDhCsj_AgpBMRqTE';
+const URL='https://fvhzuxiomzipxwdwedfj.supabase.co/rest/v1/lancamentos?order=id.asc';
+
+fetch(URL,{headers:{'apikey':KEY,'Authorization':'Bearer '+KEY}})
+  .then(r=>{
+    document.getElementById('resultado').innerHTML='Status HTTP: <b>'+r.status+'</b>';
+    return r.text();
+  })
+  .then(t=>{
+    document.getElementById('resultado').innerHTML+='<br>Resposta: <b>'+t.substring(0,200)+'</b>';
+  })
+  .catch(e=>{
+    document.getElementById('resultado').innerHTML='ERRO: <b>'+e.message+'</b>';
+  });
+</script>
+</body>
+</html>
