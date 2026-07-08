@@ -2271,15 +2271,22 @@ async function saveDocToDrive(txId){
   const fileName=`RV_${t?t.data:'doc'}_${t?t.cat:''}_${doc.nome||'documento'}`;
   await uploadToGDrive(doc.data,fileName,doc.tipo||'image/jpeg');
 }
-window.onload = function(){
+function initApp(){
+  // 1) Mostra imediatamente os dados locais (cache)
   loadFromLocal();
   loadLogoFromCloud();
   navTo('dashboard');
-  setTimeout(function(){
-    renderDashboard();
-    showSyncStatus('Pronto — começa a introduzir dados!', true);
-  }, 500);
-};
+  renderDashboard();
+  populateFilters();
+  // 2) Depois sincroniza com o Supabase (re-renderiza quando chegar)
+  loadAllFromCloud();
+}
+// Executa mesmo que o evento de load já tenha passado
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',initApp);
+}else{
+  initApp();
+}
 </script>
 </body>
 </html>
