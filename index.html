@@ -1832,10 +1832,14 @@ const SUPA_URL='https://fvhzuxiomzipxwdwedfj.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2aHp1eGlvbXppcHh3ZHdlZGZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NDQyMjMsImV4cCI6MjA5NzIyMDIyM30.AWAathuHSzHx9fc_dh52Hv_ZGiDaDhCsj_AgpBMRqTE';
 
 async function supaFetch(table,method='GET',body=null,filter=null){
-  let url=`${SUPA_URL}/rest/v1/${table}`;
-  if(filter)url+=`?${filter}`;
-  const headers={'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Prefer':'return=representation','Accept':'application/json'};
-  const opts={method,headers};
+  // apikey no URL: os GETs ficam sem headers customizados (sem preflight CORS),
+  // exatamente como o teste direto no browser que funciona
+  let url=`${SUPA_URL}/rest/v1/${table}?apikey=${SUPA_KEY}`;
+  if(filter)url+=`&${filter}`;
+  const opts={method};
+  if(method!=='GET'){
+    opts.headers={'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Prefer':'return=representation','Accept':'application/json'};
+  }
   if(body)opts.body=JSON.stringify(body);
   try{
     const res=await fetch(url,opts);
@@ -1881,11 +1885,9 @@ function initAutoPing(){
 async function loadAllFromCloud(){
   showSyncStatus('A carregar dados...',true);
   try{
-    // Teste directo primeiro
-    const testeUrl=`${SUPA_URL}/rest/v1/lancamentos?order=id.asc`;
-    const testeRes=await fetch(testeUrl,{
-      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Accept':'application/json'}
-    });
+    // Teste directo primeiro — pedido idêntico ao que funciona colado na barra do browser
+    const testeUrl=`${SUPA_URL}/rest/v1/lancamentos?order=id.asc&apikey=${SUPA_KEY}`;
+    const testeRes=await fetch(testeUrl);
     const testeText=await testeRes.text();
     console.log('Supabase status:',testeRes.status,'resposta:',testeText.substring(0,100));
 
