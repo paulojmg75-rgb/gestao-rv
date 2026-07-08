@@ -1702,7 +1702,7 @@ function showSyncStatus(msg,ok=true){
   el.style.color=ok?'#0F6E56':'#A32D2D';
   el.style.opacity='1';
   el.textContent=(ok?'✓ ':'✗ ')+msg;
-  setTimeout(()=>el.style.opacity='0',3000);
+  setTimeout(()=>el.style.opacity='0',8000);
 }
 
 /* ---- EXPORTAR EXCEL ---- */
@@ -1881,22 +1881,28 @@ function initAutoPing(){
 async function loadAllFromCloud(){
   showSyncStatus('A carregar dados...',true);
   try{
-    const [tx,fs,em,vi]=await Promise.all([
-      supaGet('lancamentos').catch(()=>null),
-      supaGet('feiras').catch(()=>null),
-      supaGet('empregados').catch(()=>null),
-      supaGet('viaturas').catch(()=>null),
-    ]);
+    // Teste directo primeiro
+    const testeUrl=`${SUPA_URL}/rest/v1/lancamentos?order=id.asc`;
+    const testeRes=await fetch(testeUrl,{
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Accept':'application/json'}
+    });
+    const testeText=await testeRes.text();
+    console.log('Supabase status:',testeRes.status,'resposta:',testeText.substring(0,100));
 
-    // Se tx é null significa erro de ligação — usa localStorage
-    if(tx===null){
+    if(!testeRes.ok){
+      showSyncStatus('Erro Supabase '+testeRes.status+': '+testeText.substring(0,50),false);
       loadFromLocal();
-      showSyncStatus('Sem ligação — dados locais',true);
-      loadLogoFromCloud();renderDashboard();populateFilters();
+      renderDashboard();populateFilters();
       return;
     }
 
-    // tx pode ser [] (vazio) ou [...] (com dados) — ambos válidos
+    const tx=JSON.parse(testeText);
+    const [fs,em,vi]=await Promise.all([
+      supaGet('feiras').catch(()=>[]),
+      supaGet('empregados').catch(()=>[]),
+      supaGet('viaturas').catch(()=>[]),
+    ]);
+
     if(Array.isArray(tx)&&tx.length>0){
       txList=tx.map(t=>({...t,valor:parseFloat(t.valor)||0}));
       nextId=Math.max(...txList.map(t=>t.id))+1;
@@ -1906,12 +1912,12 @@ async function loadAllFromCloud(){
     if(Array.isArray(em)&&em.length>0){emps=em.map(e=>({...e,sal:parseFloat(e.sal)||0}));nextEmpId=Math.max(...emps.map(e=>e.id))+1;}
     if(Array.isArray(vi)&&vi.length>0){viats=vi;nextViatId=Math.max(...viats.map(v=>v.id))+1;}
 
-    showSyncStatus('Dados carregados da nuvem!',true);
+    showSyncStatus('✓ '+tx.length+' lançamentos carregados!',true);
     initAutoPing();
   }catch(e){
-    console.error('Erro ao carregar:',e);
+    console.error('Erro:',e);
+    showSyncStatus('Erro: '+e.message,false);
     loadFromLocal();
-    showSyncStatus('Erro — dados locais',true);
   }
   loadLogoFromCloud();
   renderDashboard();
