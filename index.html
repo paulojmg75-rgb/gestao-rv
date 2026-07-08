@@ -473,8 +473,9 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
         </div>
         <img id="cfgLogoImg" style="max-width:100%;max-height:100%;object-fit:contain;display:none" alt="Logo da empresa">
       </div>
-      <span style="font-size:11px;color:var(--text2);flex:1">Logo da empresa — usado na barra superior</span>
+      <span style="font-size:11px;color:var(--text2);flex:1">Logo da empresa — usado na barra superior. Guardado também em Simulador/Logo no Google Drive.</span>
       <button class="btn btn-sm" onclick="document.getElementById('logoInput').click()"><i class="ti ti-upload"></i> Carregar</button>
+      <button class="btn btn-sm" onclick="fetchLogoFromDrive()" title="Recuperar logo já guardado no Google Drive (útil num dispositivo novo)"><i class="ti ti-brand-google-drive"></i> Recuperar do Drive</button>
       <button class="btn btn-sm" id="cfgBtnRemoveBg" onclick="openBgRemoveModal()" style="display:none"><i class="ti ti-eraser"></i> Remover fundo</button>
       <button class="btn btn-sm" id="cfgBtnRemoveLogo" onclick="removeLogo()" style="display:none;color:var(--red);border-color:var(--red-l);background:var(--red-l)"><i class="ti ti-trash"></i> Remover</button>
     </div>
@@ -807,6 +808,9 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
 
 <script>
 const COLS=['#185FA5','#0F6E56','#BA7517','#A32D2D','#3B6D11','#993C1D','#534AB7','#888780'];
+const GDRIVE_CLIENT_ID='184393297918-p9j93fdm11olm8b8r0la9hvqf1fojfhf.apps.googleusercontent.com';
+const GDRIVE_SCOPE='https://www.googleapis.com/auth/drive.file';
+let gdriveToken=null;
 const MESES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 const MN={janeiro:0,fevereiro:1,'março':2,abril:3,maio:4,junho:5,julho:6,agosto:7,setembro:8,outubro:9,novembro:10,dezembro:11};
 
@@ -929,6 +933,13 @@ function setLogo(dataUrl){
   try{localStorage.setItem('rv_logo',dataUrl);}catch(e){}
   refreshLogoUI();
   showSyncStatus('Logo guardado!',true);
+  // Envia também para Google Drive (Simulador/Logo) para ficar disponível noutros dispositivos.
+  // Silencioso: se o utilizador ainda não ligou o Drive, não interrompe o fluxo com pedido de login.
+  if(gdriveToken){
+    uploadToGDriveReplace(dataUrl,'logo.png','image/png','Logo')
+      .then(()=>showSyncStatus('Logo também guardado no Google Drive! ✓',true))
+      .catch(()=>showSyncStatus('Logo guardado localmente (falhou envio ao Drive)',false));
+  }
 }
 function removeLogo(){
   if(!confirm('Remover o logo atual? Podes carregar outro a qualquer momento.'))return;
@@ -957,7 +968,32 @@ function refreshLogoUI(){
 }
 function loadLogoFromCloud(){
   refreshLogoUI();
+  // Se não há logo local mas já há sessão Drive ativa (outro dispositivo já ligou),
+  // tenta recuperar automaticamente de Simulador/Logo.
+  if(!getLogoSrc()&&gdriveToken){
+    gdriveFindLogo().then(dataUrl=>{
+      if(dataUrl){
+        try{localStorage.setItem('rv_logo',dataUrl);}catch(e){}
+        refreshLogoUI();
+      }
+    });
+  }
   return Promise.resolve();
+}
+/* Botão manual em Configurações: força a procura do logo no Drive,
+   pedindo login se ainda não houver sessão — útil na primeira vez num dispositivo novo. */
+function fetchLogoFromDrive(){
+  gdriveAuth(()=>{
+    gdriveFindLogo().then(dataUrl=>{
+      if(dataUrl){
+        try{localStorage.setItem('rv_logo',dataUrl);}catch(e){}
+        refreshLogoUI();
+        showSyncStatus('Logo recuperado do Google Drive! ✓',true);
+      }else{
+        showSyncStatus('Não há logo guardado no Google Drive.',false);
+      }
+    });
+  });
 }
 
 /* ---- DATA ---- */
@@ -2391,10 +2427,6 @@ function aplicarFiltros(){
 }
 
 /* ---- GOOGLE DRIVE ---- */
-const GDRIVE_CLIENT_ID='184393297918-p9j93fdm11olm8b8r0la9hvqf1fojfhf.apps.googleusercontent.com';
-const GDRIVE_SCOPE='https://www.googleapis.com/auth/drive.file';
-let gdriveToken=null;
-
 function gdriveAuth(callback){
   if(gdriveToken){callback();return;}
   const client=google.accounts.oauth2.initTokenClient({
@@ -2409,27 +2441,41 @@ function gdriveAuth(callback){
   client.requestAccessToken();
 }
 
-async function uploadToGDrive(fileData, fileName, mimeType){
+/* Encontra ou cria uma pasta pelo nome, dentro de um parentId (ou raiz se omitido) */
+async function gdriveFindOrCreateFolder(name,parentId){
+  const parentQ=parentId?` and '${parentId}' in parents`:" and 'root' in parents";
+  const q=encodeURIComponent(`name='${name}' and mimeType='application/vnd.google-apps.folder' and trashed=false`)+parentQ.replace(/ /g,'+');
+  const res=await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}`,{
+    headers:{'Authorization':'Bearer '+gdriveToken}
+  });
+  const data=await res.json();
+  if(data.files&&data.files.length>0)return data.files[0].id;
+  const body={name,mimeType:'application/vnd.google-apps.folder'};
+  if(parentId)body.parents=[parentId];
+  const createRes=await fetch('https://www.googleapis.com/drive/v3/files',{
+    method:'POST',
+    headers:{'Authorization':'Bearer '+gdriveToken,'Content-Type':'application/json'},
+    body:JSON.stringify(body)
+  });
+  const created=await createRes.json();
+  return created.id;
+}
+
+/* Garante a estrutura Simulador / <subpasta> e devolve o ID da subpasta */
+async function gdriveGetSubfolder(subfolderName){
+  const rootId=await gdriveFindOrCreateFolder('Simulador');
+  return gdriveGetSubfolderFrom(rootId,subfolderName);
+}
+async function gdriveGetSubfolderFrom(rootId,subfolderName){
+  return gdriveFindOrCreateFolder(subfolderName,rootId);
+}
+
+async function uploadToGDrive(fileData, fileName, mimeType, subfolder){
+  subfolder=subfolder||'Faturas';
   return new Promise((resolve,reject)=>{
     gdriveAuth(async()=>{
       try{
-        // Criar pasta "Gestão RV" se não existir
-        const folderRes=await fetch('https://www.googleapis.com/drive/v3/files?q=name%3D%22Gestão+RV%22+and+mimeType%3D%22application%2Fvnd.google-apps.folder%22+and+trashed%3Dfalse',{
-          headers:{'Authorization':'Bearer '+gdriveToken}
-        });
-        const folderData=await folderRes.json();
-        let folderId;
-        if(folderData.files&&folderData.files.length>0){
-          folderId=folderData.files[0].id;
-        } else {
-          const createFolder=await fetch('https://www.googleapis.com/drive/v3/files',{
-            method:'POST',
-            headers:{'Authorization':'Bearer '+gdriveToken,'Content-Type':'application/json'},
-            body:JSON.stringify({name:'Gestão RV',mimeType:'application/vnd.google-apps.folder'})
-          });
-          const folderCreated=await createFolder.json();
-          folderId=folderCreated.id;
-        }
+        const folderId=await gdriveGetSubfolder(subfolder);
         // Upload do ficheiro
         const base64Data=fileData.split(',')[1];
         const byteChars=atob(base64Data);
@@ -2447,8 +2493,84 @@ async function uploadToGDrive(fileData, fileName, mimeType){
         });
         const uploaded=await uploadRes.json();
         resolve(uploaded.id);
-        showSyncStatus('Documento guardado no Google Drive! ✓',true);
+        showSyncStatus('Guardado no Google Drive! ✓',true);
       }catch(e){reject(e);showSyncStatus('Erro ao guardar no Drive',false);}
+    });
+  });
+}
+
+/* Substitui (apaga versões antigas) e envia o ficheiro mais recente para uma subpasta —
+   usado pelo Logo, que deve ter sempre uma única versão viva na pasta Simulador/Logo */
+async function uploadToGDriveReplace(fileData, fileName, mimeType, subfolder){
+  return new Promise((resolve,reject)=>{
+    gdriveAuth(async()=>{
+      try{
+        const folderId=await gdriveGetSubfolder(subfolder);
+        // apagar ficheiros antigos com o mesmo nome nessa pasta, para não acumular versões
+        const q=encodeURIComponent(`name='${fileName}' and '${folderId}' in parents and trashed=false`);
+        const existingRes=await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}`,{
+          headers:{'Authorization':'Bearer '+gdriveToken}
+        });
+        const existing=await existingRes.json();
+        if(existing.files&&existing.files.length){
+          for(const f of existing.files){
+            await fetch(`https://www.googleapis.com/drive/v3/files/${f.id}`,{
+              method:'DELETE',
+              headers:{'Authorization':'Bearer '+gdriveToken}
+            });
+          }
+        }
+        const base64Data=fileData.split(',')[1];
+        const byteChars=atob(base64Data);
+        const byteArr=new Uint8Array(byteChars.length);
+        for(let i=0;i<byteChars.length;i++)byteArr[i]=byteChars.charCodeAt(i);
+        const blob=new Blob([byteArr],{type:mimeType});
+        const meta={name:fileName,parents:[folderId]};
+        const form=new FormData();
+        form.append('metadata',new Blob([JSON.stringify(meta)],{type:'application/json'}));
+        form.append('file',blob);
+        const uploadRes=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{
+          method:'POST',
+          headers:{'Authorization':'Bearer '+gdriveToken},
+          body:form
+        });
+        const uploaded=await uploadRes.json();
+        resolve(uploaded.id);
+      }catch(e){reject(e);}
+    });
+  });
+}
+
+/* Descarrega o conteúdo (base64) de um ficheiro do Drive pelo seu ID */
+async function gdriveDownloadFile(fileId){
+  const res=await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,{
+    headers:{'Authorization':'Bearer '+gdriveToken}
+  });
+  const blob=await res.blob();
+  return new Promise((resolve,reject)=>{
+    const rd=new FileReader();
+    rd.onload=()=>resolve(rd.result);
+    rd.onerror=reject;
+    rd.readAsDataURL(blob);
+  });
+}
+
+/* Procura o logo guardado em Simulador/Logo e devolve o dataURL, ou null se não existir */
+async function gdriveFindLogo(){
+  return new Promise((resolve)=>{
+    gdriveAuth(async()=>{
+      try{
+        const folderId=await gdriveGetSubfolder('Logo');
+        const q=encodeURIComponent(`name='logo.png' and '${folderId}' in parents and trashed=false`);
+        const res=await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}`,{
+          headers:{'Authorization':'Bearer '+gdriveToken}
+        });
+        const data=await res.json();
+        if(data.files&&data.files.length){
+          const dataUrl=await gdriveDownloadFile(data.files[0].id);
+          resolve(dataUrl);
+        }else resolve(null);
+      }catch(e){resolve(null);}
     });
   });
 }
@@ -2458,7 +2580,7 @@ async function saveDocToDrive(txId){
   if(!doc){showSyncStatus('Sem documento para guardar',false);return;}
   const t=txList.find(x=>x.id===txId);
   const fileName=`RV_${t?t.data:'doc'}_${t?t.cat:''}_${doc.nome||'documento'}`;
-  await uploadToGDrive(doc.data,fileName,doc.tipo||'image/jpeg');
+  await uploadToGDrive(doc.data,fileName,doc.tipo||'image/jpeg','Faturas');
 }
 function initApp(){
   // 1) Mostra imediatamente os dados locais (cache)
