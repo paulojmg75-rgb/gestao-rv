@@ -134,6 +134,14 @@ input:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 
 .cal-d.today{background:var(--blue-l);color:var(--blue);font-weight:600}
 .cal-d.fair-day{font-weight:500}
 .fdot{width:3px;height:3px;border-radius:50%;position:absolute;bottom:1px;left:50%;transform:translateX(-50%)}
+/* Mapa anual de feiras */
+.ycal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px}
+.ycal-month{background:var(--bg);border:.5px solid var(--border);border-radius:var(--radius);padding:8px}
+.ycal-mtitle{font-size:11px;font-weight:600;text-align:center;margin-bottom:5px;color:var(--text)}
+.ycal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:1px}
+.ycal-dn{font-size:8px;color:var(--text2);text-align:center;font-weight:600;padding:1px 0}
+.ycal-d{font-size:9px;text-align:center;padding:2px 0;border-radius:3px;color:var(--text2);min-height:14px}
+.ycal-d.today{box-shadow:inset 0 0 0 1px var(--blue);font-weight:700}
 
 /* FAIR LIST */
 .fair-item{display:flex;align-items:center;gap:7px;padding:6px 8px;background:var(--bg);border-radius:var(--radius);margin-bottom:5px;border:.5px solid var(--border)}
@@ -340,6 +348,15 @@ input:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 
       </div>
       <div id="fairList"></div>
     </div>
+  </div>
+  <div class="card" style="margin-top:1rem">
+    <div class="cal-header">
+      <button class="btn btn-sm" onclick="prevYearAnnual()" title="Ano anterior"><i class="ti ti-chevron-left"></i></button>
+      <span style="font-size:14px;font-weight:600" id="ycalTitle"></span>
+      <button class="btn btn-sm" onclick="nextYearAnnual()" title="Ano seguinte"><i class="ti ti-chevron-right"></i></button>
+    </div>
+    <div class="ycal-grid" id="ycalGrid"></div>
+    <div id="ycalLegend" style="margin-top:.875rem;display:flex;flex-wrap:wrap;gap:6px"></div>
   </div>
 </div>
 
@@ -1319,9 +1336,46 @@ function renderCalendar(){
     html+=`<div class="cal-d${isTd?' today':''}${hasFair?' fair-day':''}" ${hasFair?`style="background:${hbg(inF[0].cor)};color:${inF[0].cor}"`:''} title="${hasFair?inF[0].nome:''}">${d}${hasFair?`<span class="fdot" style="background:${inF[0].cor}"></span>`:''}</div>`;
   }
   document.getElementById('calGrid').innerHTML=html;
+  renderAnnualCalendar();
 }
 function prevMonth(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
 function nextMonth(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();}
+
+/* ---- MAPA ANUAL DE FEIRAS ---- */
+let annualYear=new Date().getFullYear();
+function prevYearAnnual(){annualYear--;renderAnnualCalendar();}
+function nextYearAnnual(){annualYear++;renderAnnualCalendar();}
+function renderAnnualCalendar(){
+  const grid=document.getElementById('ycalGrid');
+  if(!grid)return;
+  const MN2=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const y=annualYear;
+  document.getElementById('ycalTitle').textContent='Mapa anual de feiras · '+y;
+  const today=new Date();
+  let html='';
+  for(let m=0;m<12;m++){
+    const first=new Date(y,m,1).getDay(),last=new Date(y,m+1,0).getDate();
+    let days=['D','S','T','Q','Q','S','S'].map(d=>`<div class="ycal-dn">${d}</div>`).join('');
+    for(let i=0;i<first;i++)days+=`<div class="ycal-d"></div>`;
+    for(let d=1;d<=last;d++){
+      const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const isTd=today.getFullYear()===y&&today.getMonth()===m&&today.getDate()===d;
+      const inF=fairs.filter(f=>ds>=f.inicio&&ds<=f.fim);
+      const hasFair=inF.length>0;
+      days+=`<div class="ycal-d${isTd?' today':''}" ${hasFair?`style="background:${hbg(inF[0].cor)};color:${inF[0].cor};font-weight:700"`:''} title="${hasFair?inF[0].nome:''}">${d}</div>`;
+    }
+    html+=`<div class="ycal-month"><div class="ycal-mtitle">${MN2[m]}</div><div class="ycal-days">${days}</div></div>`;
+  }
+  grid.innerHTML=html;
+  // Legenda: feiras que tocam este ano (inclui feiras que atravessam a passagem de ano)
+  const yStart=`${y}-01-01`,yEnd=`${y}-12-31`;
+  const yFairs=fairs.filter(f=>f.inicio<=yEnd&&f.fim>=yStart).sort((a,b)=>a.inicio.localeCompare(b.inicio));
+  document.getElementById('ycalLegend').innerHTML=yFairs.length?yFairs.map(f=>
+    `<span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;color:var(--text2);background:var(--bg);border:.5px solid var(--border);border-radius:20px;padding:3px 9px">
+      <span style="width:8px;height:8px;border-radius:50%;background:${f.cor};flex-shrink:0"></span>${f.nome}
+      <span style="color:var(--text2);opacity:.7">${f.inicio.slice(8)}/${f.inicio.slice(5,7)} → ${f.fim.slice(8)}/${f.fim.slice(5,7)}</span>
+    </span>`).join(''):`<span style="font-size:11px;color:var(--text2)">Sem feiras em ${y} — cria uma com o botão "Nova feira"</span>`;
+}
 function renderFairList(){
   const sel=document.getElementById('yearFilter');
   if(!sel)return;
