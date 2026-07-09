@@ -447,7 +447,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   <div class="card" style="margin-bottom:1rem"><div class="card-title"><i class="ti ti-users"></i> Equipa atual</div><div id="empList"></div></div>
   <div class="card">
     <div class="card-title"><i class="ti ti-table"></i> Pagamentos registados</div>
-    <table><thead><tr><th>Empregado</th><th>Local</th><th>Mês</th><th style="text-align:right">Valor</th><th style="text-align:center">Ações</th></tr></thead><tbody id="empPayBody"></tbody></table>
+    <table><thead><tr><th>Empregado</th><th>Local</th><th>Mês</th><th>Notas</th><th style="text-align:right">Valor</th><th style="text-align:center">Ações</th></tr></thead><tbody id="empPayBody"></tbody></table>
   </div>
 </div>
 
@@ -732,12 +732,12 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
     </div>
     <div class="form-group">
       <label class="form-label">Empregado associado</label>
-      <select id="f-empregado" onchange="autoFillValorDia()">
+      <select id="f-empregado">
         <option value="">— Nenhum —</option>
       </select>
     </div>
   </div>
-  <div class="form-group"><label class="form-label">Notas (opcional)</label><input type="text" id="f-notas" placeholder="Descrição adicional..."></div>
+  <div class="form-group"><label class="form-label" id="notas-label-text">Notas (opcional)</label><input type="text" id="f-notas" placeholder="Descrição adicional..."></div>
   <div class="form-group">
     <label class="form-label">Documento (fatura, recibo...)</label>
     <div id="docUploadArea" style="border:.5px dashed var(--border2);border-radius:var(--radius);padding:10px;text-align:center;cursor:pointer;background:var(--bg);position:relative" onclick="document.getElementById('f-doc').click()">
@@ -810,17 +810,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
     <div class="form-group"><label class="form-label">Nome</label><input type="text" id="em-nome" placeholder="Nome completo"></div>
     <div class="form-group"><label class="form-label">Cor do avatar</label><input type="color" id="em-cor" value="#185FA5" style="height:38px;padding:2px 4px;cursor:pointer"></div>
   </div>
-  <div class="form-group">
-    <label class="form-label">Feiras onde trabalha</label>
-    <select id="em-feira" style="width:100%">
-      <option value="">— Seleciona feira —</option>
-    </select>
-  </div>
-  <div class="form-row">
-    <div class="form-group"><label class="form-label">Valor por dia (€)</label><input type="number" id="em-sal" placeholder="0.00" min="0" step="0.01"></div>
-    <div class="form-group"><label class="form-label">Função / Cargo</label><input type="text" id="em-local" placeholder="Ex: Operador, Técnico..."></div>
-  </div>
-  <div class="form-group"><label class="form-label">Observações</label><textarea id="em-obs" placeholder="Notas sobre o empregado, horários, condições..." style="height:70px;resize:vertical"></textarea></div>
+  <div class="form-group"><label class="form-label">Função / Cargo</label><input type="text" id="em-local" placeholder="Ex: Manobrador de máquinas VR, Técnico..."></div>
   <div class="modal-footer"><button class="btn" onclick="closeEmpModal()">Cancelar</button><button class="btn btn-primary" onclick="saveEmp()"><i class="ti ti-check"></i> Guardar</button></div>
 </div></div>
 
@@ -1313,15 +1303,28 @@ function refreshCatSelect(sel){
 function toggleViatField(){
   const cat=document.getElementById('f-cat').value;
   const box=document.getElementById('viat-field-box');
-  if(!box)return;
-  if(cat==='Combustivel'){
-    const sel=document.getElementById('f-viat');
-    const atual=sel.value;
-    sel.innerHTML='<option value="">— Selecionar viatura —</option>'+
-      viats.map(v=>`<option value="${v.nome}"${v.nome===atual?' selected':''}>${v.nome}${v.matricula?' · '+v.matricula:''}</option>`).join('');
-    box.style.display='block';
-  }else{
-    box.style.display='none';
+  if(box){
+    if(cat==='Combustivel'){
+      const sel=document.getElementById('f-viat');
+      const atual=sel.value;
+      sel.innerHTML='<option value="">— Selecionar viatura —</option>'+
+        viats.map(v=>`<option value="${v.nome}"${v.nome===atual?' selected':''}>${v.nome}${v.matricula?' · '+v.matricula:''}</option>`).join('');
+      box.style.display='block';
+    }else{
+      box.style.display='none';
+    }
+  }
+  // Notas: sugere exemplos relevantes conforme a categoria (ex: horas trabalhadas para Empregados)
+  const notasLabel=document.getElementById('notas-label-text');
+  const notasInput=document.getElementById('f-notas');
+  if(notasLabel&&notasInput){
+    if(cat==='Empregados'){
+      notasLabel.textContent='Notas — ex: horas trabalhadas, condições (opcional)';
+      notasInput.placeholder='Ex: Só trabalhou 5 horas / Só 2h, o resto estava a chover...';
+    }else{
+      notasLabel.textContent='Notas (opcional)';
+      notasInput.placeholder='Descrição adicional...';
+    }
   }
 }
 function refreshContaSelect(sel){
@@ -1394,19 +1397,6 @@ function saveTx(){
     closeTxModal();renderTxTable();renderDashboard();populateFilters();return;
   }
   closeTxModal();renderTxTable();renderDashboard();populateFilters();
-}
-function autoFillValorDia(){
-  const nome=document.getElementById('f-empregado').value;
-  if(!nome)return;
-  const emp=emps.find(e=>e.nome===nome);
-  if(emp&&emp.sal>0){
-    const valorEl=document.getElementById('f-valor');
-    // só preenche se o valor estiver vazio
-    if(!valorEl.value||parseFloat(valorEl.value)===0){
-      valorEl.value=emp.sal;
-      updateSplitPreview();
-    }
-  }
 }
 function toggleSplit(){
   splitEnabled=!splitEnabled;
@@ -1684,11 +1674,10 @@ function saveFair(){
 
 /* ---- EMPREGADOS ---- */
 function renderEmpMetrics(){
-  const sal=emps.reduce((a,b)=>a+b.sal,0),pag=txList.filter(t=>t.cat==='Empregados').reduce((a,b)=>a+b.valor,0);
+  const pag=txList.filter(t=>t.cat==='Empregados').reduce((a,b)=>a+b.valor,0);
   document.getElementById('emp-metrics').innerHTML=`
     <div class="metric"><div class="metric-label">Total equipa</div><div class="metric-value">${emps.length}</div><div class="metric-sub" style="color:var(--text2)">Ativos</div></div>
-    <div class="metric"><div class="metric-label">Valor médio/dia</div><div class="metric-value">${emps.length?fmt(emps.reduce((a,b)=>a+b.sal,0)/emps.length):'0,00€'}</div><div class="metric-sub" style="color:var(--amber)">Média por dia</div></div>
-    <div class="metric"><div class="metric-label">Pago em 2025</div><div class="metric-value">${fmt(pag)}</div><div class="metric-sub" style="color:var(--teal)">Registado</div></div>`;
+    <div class="metric"><div class="metric-label">Pago no total</div><div class="metric-value">${fmt(pag)}</div><div class="metric-sub" style="color:var(--teal)">Registado</div></div>`;
 }
 function renderEmpList(){
   document.getElementById('empList').innerHTML=emps.length?emps.map(e=>`
@@ -1696,9 +1685,7 @@ function renderEmpList(){
       <div class="avatar" style="background:${hbg(e.cor)};color:${e.cor}">${e.nome.charAt(0).toUpperCase()}</div>
       <div style="flex:1">
         <div style="font-size:13px;font-weight:600;color:var(--text)">${e.nome}</div>
-        <div style="font-size:11px;color:var(--text2)">${e.local||'—'} ${e.feira?'· '+e.feira:''}</div>
-        <div style="font-size:11px;font-weight:600;margin-top:2px;color:${e.cor}">${e.sal?fmt(e.sal)+'/dia':'—'}</div>
-        ${e.obs?`<div style="font-size:10px;color:var(--text3);margin-top:2px;font-style:italic">${e.obs}</div>`:''}
+        <div style="font-size:11px;color:var(--text2)">${e.local||'—'}</div>
       </div>
       <div style="display:flex;gap:4px">
         <button class="btn btn-sm btn-icon btn-edit" onclick="editEmp(${e.id})" title="Editar"><i class="ti ti-pencil" style="font-size:12px"></i></button>
@@ -1710,27 +1697,21 @@ function renderEmpPay(){
   const pays=txList.filter(t=>t.cat==='Empregados').sort((a,b)=>b.id-a.id).slice(0,20);
   document.getElementById('empPayBody').innerHTML=pays.length?pays.map(p=>{const pts=p.conta.split('-');return`<tr>
     <td>${pts[1]||p.conta}</td><td>${pts[0]}</td><td style="text-transform:capitalize">${p.mes}</td>
+    <td style="font-size:10px;color:var(--text2);font-style:italic">${p.notas||'—'}</td>
     <td style="text-align:right;font-weight:600">${fmt(p.valor)}</td>
     <td style="text-align:center;white-space:nowrap">
       <button class="btn btn-sm btn-icon btn-edit" onclick="editTxFromEmp(${p.id})"><i class="ti ti-pencil" style="font-size:12px"></i></button>
       <button class="btn btn-sm btn-icon btn-del" onclick="deleteTxFromEmp(${p.id})"><i class="ti ti-trash" style="font-size:12px"></i></button>
-    </td></tr>`;}).join(''):`<tr><td colspan="5"><div class="empty">Sem pagamentos registados</div></td></tr>`;
+    </td></tr>`;}).join(''):`<tr><td colspan="6"><div class="empty">Sem pagamentos registados</div></td></tr>`;
 }
 function editTxFromEmp(id){editTx(id);}
 function deleteTxFromEmp(id){if(!confirm('Apagar este pagamento?'))return;txList=txList.filter(t=>t.id!==id);renderEmpPay();renderEmpMetrics();renderDashboard();}
-function populateEmpFeiras(sel){
-  const s=document.getElementById('em-feira');if(!s)return;
-  s.innerHTML='<option value="">— Seleciona feira —</option>'+fairs.map(f=>`<option value="${f.nome}"${f.nome===sel?' selected':''}>${f.nome}</option>`).join('');
-}
 function openEmpModal(){
   editEmpId=null;
   document.getElementById('empModalTitle').textContent='Novo empregado';
   document.getElementById('em-nome').value='';
   document.getElementById('em-local').value='';
-  document.getElementById('em-sal').value='';
   document.getElementById('em-cor').value='#185FA5';
-  document.getElementById('em-obs').value='';
-  populateEmpFeiras('');
   document.getElementById('empModal').style.display='flex';
 }
 function closeEmpModal(){document.getElementById('empModal').style.display='none';}
@@ -1740,27 +1721,21 @@ function editEmp(id){
   document.getElementById('empModalTitle').textContent='Editar empregado';
   document.getElementById('em-nome').value=e.nome;
   document.getElementById('em-local').value=e.local||'';
-  document.getElementById('em-sal').value=e.sal||'';
   document.getElementById('em-cor').value=e.cor;
-  document.getElementById('em-obs').value=e.obs||'';
-  populateEmpFeiras(e.feira||'');
   document.getElementById('empModal').style.display='flex';
 }
 function deleteEmp(id){if(!confirm('Remover este empregado?'))return;emps=emps.filter(e=>e.id!==id);saveToLocal();supaDelete('empregados',id).then(()=>showSyncStatus('Empregado removido!'));renderEmpMetrics();renderEmpList();}
 function saveEmp(){
   const nome=document.getElementById('em-nome').value.trim();
   const local=document.getElementById('em-local').value.trim();
-  const sal=parseFloat(document.getElementById('em-sal').value)||0;
   const cor=document.getElementById('em-cor').value;
-  const obs=document.getElementById('em-obs').value.trim();
-  const feira=document.getElementById('em-feira').value;
   if(!nome){alert('Insere o nome do empregado.');return;}
   if(editEmpId){
     const i=emps.findIndex(x=>x.id===editEmpId);
-    emps[i]={...emps[i],nome,local,sal,cor,obs,feira};
+    emps[i]={...emps[i],nome,local,cor};
     saveToLocal();supaUpdate('empregados',editEmpId,emps[emps.findIndex(x=>x.id===editEmpId)]).then(()=>showSyncStatus('Empregado atualizado!'));
   } else {
-    const novo={nome,local,sal,cor,obs,feira};
+    const novo={nome,local,cor,sal:0};
     const novoE={...novo,id:nextEmpId++};emps.push(novoE);
     saveToLocal();supaInsert('empregados',novo).then(r=>{if(r&&r[0])emps[emps.length-1].id=r[0].id;showSyncStatus('Empregado guardado!');});closeEmpModal();renderEmpMetrics();renderEmpList();return;
   }
