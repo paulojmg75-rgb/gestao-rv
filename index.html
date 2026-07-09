@@ -1377,7 +1377,10 @@ function saveTx(){
     const docFinal=docData!==null?docData:loadDocLocal(editTxId);
     txList[i]={...txList[i],tipo,data,mes,ano,valor:valorFinal,cat,conta,notas:notasFinal,meio,empregado,viatura,hasDoc:!!docFinal};
     if(docData)saveDocLocal(editTxId,docData);
-    saveToLocal();supaUpdate('lancamentos',editTxId,txList[i]).then(()=>showSyncStatus('Lançamento atualizado!'));
+    saveToLocal();supaUpdate('lancamentos',editTxId,txList[i]).then(r=>{
+      if(r)showSyncStatus('Lançamento atualizado!');
+      else showSyncStatus('Guardado só localmente — falha ao sincronizar com a cloud',false);
+    });
   } else {
     const novo={tipo,cat,conta,mes,ano,valor:valorFinal,data,notas:notasFinal,meio,empregado,viatura,hasDoc:!!docData};
     const newId=nextId++;
@@ -1391,8 +1394,11 @@ function saveTx(){
         txList[txList.length-1].id=r[0].id;
         // move doc to new id
         if(docData){saveDocLocal(r[0].id,docData);deleteDocLocal(oldId);}
+        showSyncStatus('Lançamento guardado!');
+      }else{
+        // A gravação na cloud falhou: o registo fica só local (por agora) e o utilizador é avisado.
+        showSyncStatus('Guardado só localmente — falha ao sincronizar com a cloud',false);
       }
-      showSyncStatus('Lançamento guardado!');
     });
     closeTxModal();renderTxTable();renderDashboard();populateFilters();return;
   }
