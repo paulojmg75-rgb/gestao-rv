@@ -647,7 +647,13 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   </div>
   <div class="form-group">
     <label class="form-label"><span id="cat-label-text">Categoria de despesa</span> <button class="link-btn" id="new-cat-link" onclick="openCatModal()">+ Nova categoria</button></label>
-    <select id="f-cat"></select>
+    <select id="f-cat" onchange="toggleViatField()"></select>
+  </div>
+  <div class="form-group" id="viat-field-box" style="display:none">
+    <label class="form-label"><i class="ti ti-car" style="font-size:11px"></i> Viatura abastecida</label>
+    <select id="f-viat">
+      <option value="">— Selecionar viatura —</option>
+    </select>
   </div>
   <div class="form-group">
     <label class="form-label">Conta / Local <button class="link-btn" onclick="openContaModal()">+ Novo local</button></label>
@@ -767,10 +773,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
     <div class="form-group"><label class="form-label">Nome</label><input type="text" id="vi-nome" placeholder="Ex: Vito"></div>
     <div class="form-group"><label class="form-label">Matrícula</label><input type="text" id="vi-matricula" placeholder="Ex: AA-00-BB"></div>
   </div>
-  <div class="form-row">
-    <div class="form-group"><label class="form-label">Tipo</label><select id="vi-tipo"><option>Carrinha</option><option>Auto-Caravana</option><option>Ligeiro</option><option>Reboque</option><option>Outro</option></select></div>
-    <div class="form-group"><label class="form-label">Km atual</label><input type="text" id="vi-km" placeholder="0 km"></div>
-  </div>
+  <div class="form-group"><label class="form-label">Tipo</label><select id="vi-tipo"><option>Carrinha</option><option>Auto-Caravana</option><option>Ligeiro</option><option>Reboque</option><option>Outro</option></select></div>
   <div class="modal-footer"><button class="btn" onclick="closeViatModal()">Cancelar</button><button class="btn btn-primary" onclick="saveViat()"><i class="ti ti-check"></i> Guardar</button></div>
 </div></div>
 
@@ -1172,6 +1175,7 @@ function openTxModal(){
   document.getElementById('f-meio').value='Dinheiro';
   document.getElementById('f-empregado').innerHTML='<option value="">— Nenhum —</option>'+emps.map(e=>`<option value="${e.nome}">${e.nome}</option>`).join('');
   refreshCatSelect();refreshContaSelect();
+  document.getElementById('f-viat').value='';
   document.getElementById('txModal').style.display='flex';
 }
 function editTx(id){
@@ -1188,6 +1192,7 @@ function editTx(id){
   document.getElementById('f-meio').value=t.meio||'Dinheiro';
   document.getElementById('f-empregado').innerHTML='<option value="">— Nenhum —</option>'+emps.map(e=>`<option value="${e.nome}"${e.nome===t.empregado?' selected':''}>${e.nome}</option>`).join('');
   refreshCatSelect(t.cat);refreshContaSelect(t.conta);
+  if(t.viatura)document.getElementById('f-viat').value=t.viatura;
   // Restaurar documento se existir
   const existingDoc=loadDocLocal(id);
   if(existingDoc){
@@ -1222,6 +1227,22 @@ function refreshCatSelect(sel){
   const s=document.getElementById('f-cat');
   s.innerHTML=list.map(c=>`<option${sel&&c===sel?' selected':''}>${c}</option>`).join('');
   if(sel&&!list.includes(sel))s.innerHTML+=`<option selected>${sel}</option>`;
+  toggleViatField();
+}
+/* Mostra/esconde e preenche o campo "Viatura abastecida", só relevante para Despesa/Combustivel */
+function toggleViatField(){
+  const cat=document.getElementById('f-cat').value;
+  const box=document.getElementById('viat-field-box');
+  if(!box)return;
+  if(cat==='Combustivel'){
+    const sel=document.getElementById('f-viat');
+    const atual=sel.value;
+    sel.innerHTML='<option value="">— Selecionar viatura —</option>'+
+      viats.map(v=>`<option value="${v.nome}"${v.nome===atual?' selected':''}>${v.nome}${v.matricula?' · '+v.matricula:''}</option>`).join('');
+    box.style.display='block';
+  }else{
+    box.style.display='none';
+  }
 }
 function refreshContaSelect(sel){
   const s=document.getElementById('f-conta');
@@ -1262,6 +1283,7 @@ function saveTx(){
   const conta=document.getElementById('f-conta').value,notas=document.getElementById('f-notas').value;
   const meio=document.getElementById('f-meio').value;
   const empregado=document.getElementById('f-empregado').value||'';
+  const viatura=(cat==='Combustivel'?(document.getElementById('f-viat').value||''):'');
   if(!data||isNaN(valor)||valor<=0){alert('Por favor preenche a data e um valor válido (maior que zero).');return;}
   const splitAtivo=splitEnabled&&tipo==='Receita';
   const pct=splitAtivo?(parseFloat(document.getElementById('split-pct').value)||50):100;
@@ -1270,11 +1292,11 @@ function saveTx(){
   if(editTxId){
     const i=txList.findIndex(x=>x.id===editTxId);
     const docFinal=docData!==null?docData:loadDocLocal(editTxId);
-    txList[i]={...txList[i],tipo,data,mes,ano,valor:valorFinal,cat,conta,notas:notasFinal,meio,empregado,hasDoc:!!docFinal};
+    txList[i]={...txList[i],tipo,data,mes,ano,valor:valorFinal,cat,conta,notas:notasFinal,meio,empregado,viatura,hasDoc:!!docFinal};
     if(docData)saveDocLocal(editTxId,docData);
     saveToLocal();supaUpdate('lancamentos',editTxId,txList[i]).then(()=>showSyncStatus('Lançamento atualizado!'));
   } else {
-    const novo={tipo,cat,conta,mes,ano,valor:valorFinal,data,notas:notasFinal,meio,empregado,hasDoc:!!docData};
+    const novo={tipo,cat,conta,mes,ano,valor:valorFinal,data,notas:notasFinal,meio,empregado,viatura,hasDoc:!!docData};
     const newId=nextId++;
     const novoTx={...novo,id:newId};
     txList.push(novoTx);
@@ -1667,9 +1689,7 @@ function saveEmp(){
 
 /* ---- VIATURAS ---- */
 function renderViats(){
-  const cM={};txList.filter(t=>t.cat==='Combustivel').forEach(t=>{cM[t.conta]=(cM[t.conta]||0)+t.valor;});
   document.getElementById('viatList').innerHTML=viats.length?viats.map(v=>{
-    const cust=Object.entries(cM).filter(([k])=>k.toUpperCase().includes(v.nome.toUpperCase())).reduce((a,[,b])=>a+b,0);
     return`<div class="viat-card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <div style="font-size:14px;font-weight:600;display:flex;align-items:center;gap:7px">
@@ -1682,10 +1702,6 @@ function renderViats(){
           <button class="btn btn-sm btn-icon btn-del" onclick="deleteViat(${v.id})"><i class="ti ti-trash" style="font-size:12px"></i></button>
         </div>
       </div>
-      <div style="display:flex;gap:24px;font-size:11px">
-        <div><div style="color:var(--text2)">Quilometragem</div><div style="font-weight:600;margin-top:2px">${v.km}</div></div>
-        <div><div style="color:var(--text2)">Combustível total</div><div style="font-weight:600;margin-top:2px;color:var(--amber)">${fmt(cust)}</div></div>
-      </div>
     </div>`;}).join(''):`<div class="empty"><i class="ti ti-car"></i>Sem viaturas registadas</div>`;
 }
 function renderCombust(){
@@ -1693,23 +1709,22 @@ function renderCombust(){
   const sorted=Object.entries(cM).sort((a,b)=>b[1]-a[1]),maxC=Math.max(...sorted.map(x=>x[1]),1);
   document.getElementById('combustBars').innerHTML=sorted.length?sorted.map(([l,v],i)=>`<div class="bar-row"><div class="bar-label">${l.length>16?l.slice(0,16)+'…':l}</div><div class="bar-wrap"><div class="bar-fill" style="width:${Math.round(v/maxC*100)}%;background:${COLS[i%COLS.length]}">&nbsp;</div></div><div class="bar-val">${fmt(v)}</div></div>`).join(''):`<div class="empty">Sem registos de combustível</div>`;
 }
-function openViatModal(){editViatId=null;document.getElementById('viatModalTitle').textContent='Nova viatura';document.getElementById('vi-nome').value='';document.getElementById('vi-matricula').value='';document.getElementById('vi-km').value='';document.getElementById('viatModal').style.display='flex';}
+function openViatModal(){editViatId=null;document.getElementById('viatModalTitle').textContent='Nova viatura';document.getElementById('vi-nome').value='';document.getElementById('vi-matricula').value='';document.getElementById('viatModal').style.display='flex';}
 function closeViatModal(){document.getElementById('viatModal').style.display='none';}
-function editViat(id){const v=viats.find(x=>x.id===id);if(!v)return;editViatId=id;document.getElementById('viatModalTitle').textContent='Editar viatura';document.getElementById('vi-nome').value=v.nome;document.getElementById('vi-matricula').value=v.matricula||'';document.getElementById('vi-tipo').value=v.tipo;document.getElementById('vi-km').value=v.km;document.getElementById('viatModal').style.display='flex';}
+function editViat(id){const v=viats.find(x=>x.id===id);if(!v)return;editViatId=id;document.getElementById('viatModalTitle').textContent='Editar viatura';document.getElementById('vi-nome').value=v.nome;document.getElementById('vi-matricula').value=v.matricula||'';document.getElementById('vi-tipo').value=v.tipo;document.getElementById('viatModal').style.display='flex';}
 function deleteViat(id){if(!confirm('Remover esta viatura?'))return;viats=viats.filter(v=>v.id!==id);saveToLocal();supaDelete('viaturas',id).then(()=>showSyncStatus('Viatura removida!'));renderViats();renderCombust();}
 function saveViat(){
   const nome=document.getElementById('vi-nome').value.trim();
   const matricula=document.getElementById('vi-matricula').value.trim();
   const tipo=document.getElementById('vi-tipo').value;
-  const km=document.getElementById('vi-km').value.trim()||'—';
   if(!nome){alert('Insere o nome da viatura.');return;}
   if(editViatId){
     const i=viats.findIndex(x=>x.id===editViatId);
-    viats[i]={...viats[i],nome,matricula,tipo,km};
+    viats[i]={...viats[i],nome,matricula,tipo};
     saveToLocal();supaUpdate('viaturas',editViatId,viats[viats.findIndex(x=>x.id===editViatId)]).then(()=>showSyncStatus('Viatura atualizada!'));
     closeViatModal();renderViats();renderCombust();afterSaveViat();
   } else {
-    const nova={nome,matricula,tipo,km};
+    const nova={nome,matricula,tipo,km:'—'};
     const novaV={...nova,id:nextViatId++};viats.push(novaV);
     saveToLocal();supaInsert('viaturas',nova).then(r=>{if(r&&r[0])viats[viats.length-1].id=r[0].id;showSyncStatus('Viatura guardada!');});
     closeViatModal();renderViats();renderCombust();afterSaveViat();
@@ -2250,7 +2265,7 @@ function renderConfiguracoes(){
       <div style="display:flex;align-items:center;gap:8px">
         <i class="ti ti-grip-vertical" style="color:var(--text3);font-size:14px"></i>
         <i class="ti ${v.tipo==='Carrinha'?'ti-van':v.tipo==='Auto-Caravana'?'ti-home-2':'ti-car'}" style="color:var(--blue);font-size:16px"></i>
-        <div><div style="font-size:12px;font-weight:500;color:var(--text)">${v.nome}${v.matricula?` <span style="color:var(--text2);font-weight:400">· ${v.matricula}</span>`:''}</div><div style="font-size:10px;color:var(--text2)">${v.tipo} · ${v.km}</div></div>
+        <div><div style="font-size:12px;font-weight:500;color:var(--text)">${v.nome}${v.matricula?` <span style="color:var(--text2);font-weight:400">· ${v.matricula}</span>`:''}</div><div style="font-size:10px;color:var(--text2)">${v.tipo}</div></div>
       </div>
       <div style="display:flex;gap:4px">
         <button class="btn btn-sm btn-icon btn-edit" onclick="editViat(${v.id})"><i class="ti ti-pencil" style="font-size:11px"></i></button>
@@ -2443,8 +2458,9 @@ function gdriveAuth(callback){
 
 /* Encontra ou cria uma pasta pelo nome, dentro de um parentId (ou raiz se omitido) */
 async function gdriveFindOrCreateFolder(name,parentId){
-  const parentQ=parentId?` and '${parentId}' in parents`:" and 'root' in parents";
-  const q=encodeURIComponent(`name='${name}' and mimeType='application/vnd.google-apps.folder' and trashed=false`)+parentQ.replace(/ /g,'+');
+  const parentClause=parentId?` and '${parentId}' in parents`:" and 'root' in parents";
+  const rawQuery=`name='${name}' and mimeType='application/vnd.google-apps.folder' and trashed=false`+parentClause;
+  const q=encodeURIComponent(rawQuery);
   const res=await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}`,{
     headers:{'Authorization':'Bearer '+gdriveToken}
   });
