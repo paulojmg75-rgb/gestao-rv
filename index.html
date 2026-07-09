@@ -1230,7 +1230,26 @@ function renderTxTable(){
     </td></tr>`).join(''):`<tr><td colspan="10"><div class="empty"><i class="ti ti-inbox"></i>Sem registos para os filtros selecionados</div></td></tr>`;
 }
 function filterTx(f,el){activeFilter=f;document.querySelectorAll('.tab-bar .tab').forEach(x=>x.classList.remove('active'));el.classList.add('active');renderTxTable();}
-function deleteTx(id){if(!confirm('Apagar este lançamento? Esta ação não pode ser desfeita.'))return;txList=txList.filter(t=>t.id!==id);saveToLocal();supaDelete('lancamentos',id).then(()=>showSyncStatus('Lançamento apagado!'));renderTxTable();renderDashboard();populateFilters();}
+async function deleteTx(id){
+  if(!confirm('Apagar este lançamento? Esta ação não pode ser desfeita.'))return;
+  const driveId=loadDocDriveId(id);
+  // Apaga o lançamento primeiro (ação principal), sem ficar preso à autenticação do Drive
+  txList=txList.filter(t=>t.id!==id);
+  saveToLocal();
+  supaDelete('lancamentos',id).then(()=>showSyncStatus('Lançamento apagado!'));
+  renderTxTable();renderDashboard();populateFilters();
+  // Limpeza do documento associado: localStorage + ficheiro no Google Drive
+  deleteDocLocal(id);
+  deleteDocDriveId(id);
+  if(driveId){
+    try{
+      await gdriveDeleteFile(driveId);
+    }catch(e){
+      console.error('Falha ao apagar ficheiro do Drive:',e);
+      showSyncStatus('Lançamento apagado, mas o ficheiro no Drive pode não ter sido removido',false);
+    }
+  }
+}
 function openTxModal(){
   editTxId=null;
   document.getElementById('editBanner').style.display='none';
@@ -1358,6 +1377,12 @@ function loadDocLocal(txId){
 function deleteDocLocal(txId){
   try{localStorage.removeItem('rv_doc_'+txId);}catch(e){}
 }
+/* Guarda/lê/apaga o ID do ficheiro no Google Drive associado a um lançamento.
+   Fica no localStorage, ao lado do próprio documento (rv_doc_), porque toda a
+   gestão de documentos desta app é local ao dispositivo — o Drive é só arquivo. */
+function saveDocDriveId(txId,fileId){try{if(fileId)localStorage.setItem('rv_docid_'+txId,fileId);}catch(e){}}
+function loadDocDriveId(txId){try{return localStorage.getItem('rv_docid_'+txId)||null;}catch(e){return null;}}
+function deleteDocDriveId(txId){try{localStorage.removeItem('rv_docid_'+txId);}catch(e){}}
 function saveTx(){
   const tipo=document.getElementById('f-tipo').value,data=document.getElementById('f-data').value,mes=document.getElementById('f-mes').value;
   const ano=parseInt(document.getElementById('f-ano').value)||new Date().getFullYear();
@@ -2619,6 +2644,23 @@ async function uploadToGDriveReplace(fileData, fileName, mimeType, subfolder){
   });
 }
 
+/* Apaga um ficheiro do Drive pelo seu ID. Garante sessão via gdriveAuth.
+   Trata 404 (já não existe) como sucesso, para não bloquear em ficheiros já removidos. */
+async function gdriveDeleteFile(fileId){
+  return new Promise((resolve,reject)=>{
+    gdriveAuth(async()=>{
+      try{
+        const res=await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`,{
+          method:'DELETE',
+          headers:{'Authorization':'Bearer '+gdriveToken}
+        });
+        if(res.ok||res.status===404)resolve(true);
+        else reject(new Error('Drive DELETE status '+res.status));
+      }catch(e){reject(e);}
+    });
+  });
+}
+
 /* Descarrega o conteúdo (base64) de um ficheiro do Drive pelo seu ID */
 async function gdriveDownloadFile(fileId){
   const res=await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,{
@@ -2658,7 +2700,12 @@ async function saveDocToDrive(txId){
   if(!doc){showSyncStatus('Sem documento para guardar',false);return;}
   const t=txList.find(x=>x.id===txId);
   const fileName=`RV_${t?t.data:'doc'}_${t?t.cat:''}_${doc.nome||'documento'}`;
-  await uploadToGDrive(doc.data,fileName,doc.tipo||'image/jpeg','Faturas');
+  // Antes de enviar uma nova versão, apaga a anterior no Drive (se existir),
+  // para não acumular duplicados quando se guarda o mesmo lançamento mais que uma vez.
+  const anterior=loadDocDriveId(txId);
+  if(anterior){try{await gdriveDeleteFile(anterior);}catch(e){console.error('Não removeu versão anterior no Drive:',e);}}
+  const fileId=await uploadToGDrive(doc.data,fileName,doc.tipo||'image/jpeg','Faturas');
+  saveDocDriveId(txId,fileId);
 }
 function initApp(){
   // 1) Mostra imediatamente os dados locais (cache)
