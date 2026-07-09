@@ -198,7 +198,21 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
 .result-stat-val{font-size:17px;font-weight:700;color:var(--text)}
 .result-stat-label{font-size:9px;color:var(--text2);margin-top:2px}
 
-/* MOBILE BOTTOM NAV */
+/* MOBILE HEADER — escondido por defeito, só aparece em ecrãs pequenos */
+.mobile-header{display:none;align-items:center;gap:10px;padding:10px 14px;background:var(--side);border-bottom:1px solid var(--side-line);position:sticky;top:0;z-index:90}
+.mobile-header-logo{width:44px;height:44px;border-radius:8px;border:1px dashed var(--border2);background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+.mobile-header-logo img{width:100%;height:100%;object-fit:contain}
+.mobile-header-title{min-width:0}
+
+/* MOBILE "MAIS" PAINEL DESLIZANTE */
+.mobile-more-overlay{display:none;position:fixed;inset:0;background:rgba(28,25,23,.45);z-index:150}
+.mobile-more-overlay.open{display:block}
+.mobile-more-panel{display:none;position:fixed;left:0;right:0;bottom:0;background:var(--bg2);border-radius:16px 16px 0 0;padding:8px 0 max(16px,env(safe-area-inset-bottom));z-index:160;box-shadow:0 -8px 24px rgba(0,0,0,.15);transform:translateY(100%);transition:transform .25s cubic-bezier(.4,0,.2,1)}
+.mobile-more-panel.open{display:block;transform:translateY(0)}
+.mobile-more-handle{width:36px;height:4px;border-radius:2px;background:var(--border2);margin:6px auto 10px}
+.mobile-more-item{display:flex;align-items:center;gap:12px;padding:14px 20px;font-size:14px;font-weight:600;color:var(--text);cursor:pointer}
+.mobile-more-item:active{background:var(--bg3)}
+.mobile-more-item i{font-size:19px;color:var(--accent);width:24px;text-align:center}
 .mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--side);border-top:1px solid var(--side-line);padding:5px 0;z-index:100;justify-content:space-around}
 .mobile-nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:3px 6px;cursor:pointer;color:var(--side-text-dim);font-size:8px;font-weight:600;border-radius:var(--radius);transition:all .15s;flex:1}
 .mobile-nav-item i{font-size:20px}
@@ -207,8 +221,9 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
 /* RESPONSIVE */
 @media(max-width:768px){
   .sidebar{display:none}
+  .mobile-header{display:flex}
   .mobile-nav{display:flex}
-  .main{padding-bottom:64px}
+  .main{padding-bottom:70px}
   .page{padding:.75rem}
   .metrics{grid-template-columns:repeat(2,1fr)}
   .metrics-3{grid-template-columns:repeat(2,1fr)}
@@ -216,9 +231,30 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   .form-row{grid-template-columns:1fr}
   .filter-grid{grid-template-columns:1fr 1fr}
   .page-header{flex-direction:column;align-items:flex-start}
+  .page-header .btn{width:100%;justify-content:center}
   .tab-bar{flex-wrap:wrap;width:100%}
   .tab{flex:1;text-align:center;padding:4px 4px}
-  .modal{padding:.875rem;max-height:88vh}
+  .modal{padding:.875rem;max-height:88vh;width:94vw}
+
+  /* Tabelas: scroll horizontal em vez de espremer colunas */
+  table{display:block;overflow-x:auto;white-space:nowrap}
+
+  /* Página Configurações: as 3 colunas lado a lado passam a empilhar */
+  #page-configuracoes>div[style*="flex"]{flex-direction:column!important}
+  #page-configuracoes>div[style*="flex"]>div{width:100%!important}
+
+  /* Cartão de logo em Configurações: empilha em vez de ficar apertado numa linha */
+  #page-configuracoes .card div[style*="align-items:center"][style*="flex-wrap"]{flex-direction:column;align-items:stretch!important}
+  #page-configuracoes .card div[style*="align-items:center"][style*="flex-wrap"] button{width:100%;justify-content:center}
+
+  /* Mapa anual de feiras: 2 meses por linha em vez de espremer muitos */
+  .ycal-grid{grid-template-columns:repeat(2,1fr)}
+
+  /* Cartões de viatura/empregado: já são full-width por defeito, apenas garantir padding confortável */
+  .viat-card,.emp-card{padding:12px}
+
+  /* Filtros: labels e resultados em coluna única mais legível */
+  .result-stat-val{font-size:15px}
 }
 @media(max-width:480px){
   .metrics{grid-template-columns:1fr 1fr}
@@ -226,6 +262,8 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   .page{padding:.5rem}
   .metric-value{font-size:16px}
   .grid2{gap:.5rem}
+  .ycal-grid{grid-template-columns:1fr}
+  .mobile-header-title .logo-title{font-size:12px}
 }
 </style>
 </head>
@@ -266,14 +304,35 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   </div>
 </div>
 
+<!-- MOBILE HEADER (logo, visível só em ecrãs pequenos) -->
+<header class="mobile-header">
+  <div class="mobile-header-logo" id="mobileLogoWrap">
+    <span id="mobileLogoPlaceholder" style="font-size:8px;font-weight:700;color:var(--side-text-dim);letter-spacing:.05em">LOGO</span>
+  </div>
+  <div class="mobile-header-title">
+    <div class="logo-title" style="font-size:13px">Realidade Virtual</div>
+    <div class="logo-sub" style="font-size:9px">Gestão de Simuladores</div>
+  </div>
+</header>
+
 <!-- MOBILE BOTTOM NAV -->
 <nav class="mobile-nav">
   <div class="mobile-nav-item active" data-page="dashboard"><i class="ti ti-layout-dashboard"></i><span>Início</span></div>
   <div class="mobile-nav-item" data-page="lancamentos"><i class="ti ti-plus-circle"></i><span>Lançar</span></div>
-  <div class="mobile-nav-item" data-page="filtros"><i class="ti ti-filter"></i><span>Filtros</span></div>
   <div class="mobile-nav-item" data-page="feiras"><i class="ti ti-calendar-event"></i><span>Feiras</span></div>
-  <div class="mobile-nav-item" data-page="configuracoes"><i class="ti ti-settings"></i><span>Config.</span></div>
+  <div class="mobile-nav-item" data-page="filtros"><i class="ti ti-filter"></i><span>Filtros</span></div>
+  <div class="mobile-nav-item" id="mobileMoreBtn" onclick="toggleMobileMore()"><i class="ti ti-dots"></i><span>Mais</span></div>
 </nav>
+
+<!-- MOBILE "MAIS" PANEL -->
+<div class="mobile-more-overlay" id="mobileMoreOverlay" onclick="toggleMobileMore()"></div>
+<div class="mobile-more-panel" id="mobileMorePanel">
+  <div class="mobile-more-handle"></div>
+  <div class="mobile-more-item" data-page="empregados"><i class="ti ti-users"></i><span>Empregados</span></div>
+  <div class="mobile-more-item" data-page="viaturas"><i class="ti ti-car"></i><span>Viaturas</span></div>
+  <div class="mobile-more-item" data-page="relatorio"><i class="ti ti-chart-bar"></i><span>Relatório</span></div>
+  <div class="mobile-more-item" data-page="configuracoes"><i class="ti ti-settings"></i><span>Configurações</span></div>
+</div>
 
 <!-- MAIN -->
 <div class="main">
@@ -968,6 +1027,13 @@ function refreshLogoUI(){
       ?`<img id="topbarLogoImg" src="${src}" alt="Logo" style="width:100%;height:100%;object-fit:contain">`
       :`<span style="font-size:8px;font-weight:700;color:var(--side-text-dim);letter-spacing:.05em">LOGO</span>`;
   }
+  // Mobile header (mesmo logo, tamanho maior)
+  const mbWrap=document.getElementById('mobileLogoWrap');
+  if(mbWrap){
+    mbWrap.innerHTML=src
+      ?`<img src="${src}" alt="Logo" style="width:100%;height:100%;object-fit:contain">`
+      :`<span style="font-size:8px;font-weight:700;color:var(--side-text-dim);letter-spacing:.05em">LOGO</span>`;
+  }
 }
 function loadLogoFromCloud(){
   refreshLogoUI();
@@ -1022,7 +1088,7 @@ let nextViatId=1; let editViatId=null;
 
 /* ---- NAV ---- */
 function navTo(p){
-  document.querySelectorAll('.nav-item,.mobile-nav-item').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nav-item,.mobile-nav-item,.mobile-more-item').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll(`[data-page="${p}"]`).forEach(x=>x.classList.add('active'));
   document.getElementById('page-'+p).classList.add('active');
@@ -1034,10 +1100,24 @@ function navTo(p){
   if(p==='relatorio'){renderReport('mensal');}
   if(p==='filtros'){initFiltros();}
   if(p==='configuracoes'){renderConfiguracoes();}
+  closeMobileMore();
+  window.scrollTo(0,0);
 }
-document.querySelectorAll('.nav-item,.mobile-nav-item').forEach(el=>{
+document.querySelectorAll('.nav-item,.mobile-nav-item,.mobile-more-item').forEach(el=>{
   el.addEventListener('click',()=>navTo(el.dataset.page));
 });
+/* Painel "Mais" da navegação móvel */
+function toggleMobileMore(){
+  const panel=document.getElementById('mobileMorePanel'),overlay=document.getElementById('mobileMoreOverlay');
+  const isOpen=panel.classList.contains('open');
+  if(isOpen){closeMobileMore();}
+  else{panel.classList.add('open');overlay.classList.add('open');}
+}
+function closeMobileMore(){
+  const panel=document.getElementById('mobileMorePanel'),overlay=document.getElementById('mobileMoreOverlay');
+  if(panel)panel.classList.remove('open');
+  if(overlay)overlay.classList.remove('open');
+}
 
 /* ---- DASHBOARD ---- */
 function populateDashYear(){
