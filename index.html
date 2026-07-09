@@ -1995,6 +1995,7 @@ function exportarExcel(){
   // Largura das colunas
   linkSheet['!cols']=[{wch:50},{wch:30}];
   wb.Sheets['Abrir Aplicação']=linkSheet;
+  const nome=`GestaoRV_${new Date().toISOString().split('T')[0]}.xlsx`;
   XLSX.writeFile(wb,nome);
   showSyncStatus('Ficheiro Excel exportado!',true);
 }
