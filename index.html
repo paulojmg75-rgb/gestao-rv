@@ -1404,7 +1404,7 @@ function saveTx(){
     const docFinal=docData!==null?docData:loadDocLocal(editTxId);
     txList[i]={...txList[i],tipo,data,mes,ano,valor:valorFinal,cat,conta,notas:notasFinal,meio,empregado,viatura,hasDoc:!!docFinal};
     if(docData)saveDocLocal(editTxId,docData);
-    if(docData && gdriveToken){ saveDocToDrive(editTxId, true).catch(e=>console.error('Auto-Drive:',e)); }
+    if(docData){ archiveOnSave(editTxId); }
     saveToLocal();supaUpdate('lancamentos',editTxId,txList[i]).then(r=>{
       if(r)showSyncStatus('Lançamento atualizado!');
       else showSyncStatus('Guardado só localmente — falha ao sincronizar com a cloud',false);
@@ -1424,8 +1424,8 @@ function saveTx(){
         if(docData){saveDocLocal(r[0].id,docData);deleteDocLocal(oldId);}
         saveToLocal();
         renderTxTable();renderDashboard();populateFilters();
-        // Arquivo automático no Drive (silencioso; só se já houver sessão Drive ativa)
-        if(docData && gdriveToken){ saveDocToDrive(r[0].id, true).catch(e=>console.error('Auto-Drive:',e)); }
+        // Arquivo no Drive: guarda logo (com mensagem) ou pergunta se o Drive não estiver ligado
+        if(docData){ archiveOnSave(r[0].id); }
         showSyncStatus('Lançamento guardado!');
       }else{
         // A gravação na cloud falhou: o registo fica só local (por agora) e o utilizador é avisado.
@@ -2744,21 +2744,71 @@ async function gdriveFindLogo(){
   });
 }
 
+/* Extensão de ficheiro a partir do tipo MIME */
+function docExt(mime){
+  if(!mime)return 'bin';
+  if(mime.includes('png'))return 'png';
+  if(mime.includes('jpeg')||mime.includes('jpg'))return 'jpg';
+  if(mime.includes('gif'))return 'gif';
+  if(mime.includes('webp'))return 'webp';
+  if(mime.includes('pdf'))return 'pdf';
+  return 'bin';
+}
+
+/* Arquiva o documento de um lançamento no Drive com nome CANÓNICO e único: RV_{id}_fatura.ext
+   Antes de enviar, apaga TODAS as cópias desse lançamento na pasta (nomes antigos e duplicados),
+   procurando por prefixo 'RV_{id}_'. O '_' final evita apanhar outros ids (RV_5_ ≠ RV_50_).
+   Resultado: fica sempre UMA só cópia, venha do PC ou do telemóvel. */
+async function archiveDocToDrive(txId, doc){
+  return new Promise((resolve,reject)=>{
+    gdriveAuth(async()=>{
+      try{
+        const folderId=await gdriveGetSubfolder('Faturas');
+        const q=encodeURIComponent(`name contains 'RV_${txId}_' and '${folderId}' in parents and trashed=false`);
+        const exRes=await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)`,{headers:{'Authorization':'Bearer '+gdriveToken}});
+        const ex=await exRes.json();
+        if(ex.files){for(const f of ex.files){await fetch(`https://www.googleapis.com/drive/v3/files/${f.id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+gdriveToken}});}}
+        const fileName=`RV_${txId}_fatura.${docExt(doc.tipo)}`;
+        const base64Data=doc.data.split(',')[1];
+        const byteChars=atob(base64Data);
+        const byteArr=new Uint8Array(byteChars.length);
+        for(let i=0;i<byteChars.length;i++)byteArr[i]=byteChars.charCodeAt(i);
+        const blob=new Blob([byteArr],{type:doc.tipo||'application/octet-stream'});
+        const meta={name:fileName,parents:[folderId]};
+        const form=new FormData();
+        form.append('metadata',new Blob([JSON.stringify(meta)],{type:'application/json'}));
+        form.append('file',blob);
+        const upRes=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{method:'POST',headers:{'Authorization':'Bearer '+gdriveToken},body:form});
+        const up=await upRes.json();
+        resolve(up.id);
+      }catch(e){reject(e);}
+    });
+  });
+}
+
 async function saveDocToDrive(txId, silent){
   const doc=loadDocLocal(txId);
   if(!doc){ if(!silent)showSyncStatus('Sem documento para guardar',false); return; }
-  const t=txList.find(x=>x.id===txId);
-  // Nome único por lançamento (inclui o id), para o "substituir por nome" só afetar este.
-  const fileName=`RV_${txId}_${t?t.data:''}_${t?t.cat:''}_${doc.nome||'documento'}`;
   try{
-    // uploadToGDriveReplace apaga primeiro qualquer ficheiro com este nome na pasta Faturas
-    // e só depois envia — por isso clicar várias vezes nunca cria duplicados: fica sempre 1 cópia.
-    const fileId=await uploadToGDriveReplace(doc.data,fileName,doc.tipo||'image/jpeg','Faturas');
+    const fileId=await archiveDocToDrive(txId, doc);
     saveDocDriveId(txId,fileId);
-    if(!silent)showSyncStatus('Guardado no Google Drive! ✓',true);
+    if(!silent)showSyncStatus('✓ Fatura guardada no Google Drive com sucesso!',true);
   }catch(e){
     console.error('Falha ao guardar no Drive:',e);
     if(!silent)showSyncStatus('Erro ao guardar no Drive',false);
+  }
+}
+
+/* Chamado logo após gravar um lançamento com documento.
+   - Drive ligado  → arquiva já e mostra "✓ Fatura guardada no Google Drive com sucesso!"
+   - Drive desligado → pergunta se quer guardar (para não esquecer); se sim, liga e guarda. */
+function archiveOnSave(txId){
+  if(gdriveToken){
+    saveDocToDrive(txId); // não-silencioso: mostra a mensagem de sucesso
+  }else{
+    if(confirm('Guardar esta fatura no Google Drive?\nAssim podes vê-la também no telemóvel / noutros dispositivos.')){
+      saveDocToDrive(txId);
+    }
   }
 }
 function initApp(){
