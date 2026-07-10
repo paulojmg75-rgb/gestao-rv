@@ -298,6 +298,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   <div class="nav-divider"></div>
   <div class="nav-item" data-page="configuracoes"><i class="ti ti-settings"></i> Configurações</div>
   <div class="topbar-actions">
+    <button class="btn btn-icon" onclick="loadAllFromCloud()" title="Sincronizar agora" style="color:var(--blue);border-color:var(--blue-l);background:var(--blue-l)"><i class="ti ti-refresh"></i></button>
     <button class="btn btn-icon" onclick="exportarExcel()" title="Exportar Excel" style="color:var(--teal);border-color:var(--teal-l);background:var(--teal-l)"><i class="ti ti-download"></i></button>
     <label class="btn btn-icon" title="Importar Excel" style="cursor:pointer;color:var(--blue);border-color:var(--blue-l);background:var(--blue-l)"><i class="ti ti-upload"></i><input type="file" accept=".xlsx,.xls" onchange="importarExcel(event)" style="display:none"></label>
     <button class="btn btn-icon" onclick="gdriveAuth(()=>showSyncStatus('Google Drive ligado! ✓',true))" title="Ligar Google Drive" style="color:var(--amber);border-color:var(--amber-l);background:var(--amber-l)"><i class="ti ti-brand-google-drive"></i></button>
@@ -863,6 +864,7 @@ const COLS=['#185FA5','#0F6E56','#BA7517','#A32D2D','#3B6D11','#993C1D','#534AB7
 const GDRIVE_CLIENT_ID='184393297918-p9j93fdm11olm8b8r0la9hvqf1fojfhf.apps.googleusercontent.com';
 const GDRIVE_SCOPE='https://www.googleapis.com/auth/drive.file';
 let gdriveToken=null;
+let lastCloudSync=0;
 const MESES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 const MN={janeiro:0,fevereiro:1,'março':2,abril:3,maio:4,junho:5,julho:6,agosto:7,setembro:8,outubro:9,novembro:10,dezembro:11};
 
@@ -1419,6 +1421,8 @@ function saveTx(){
         txList[txList.length-1].id=r[0].id;
         // move doc to new id
         if(docData){saveDocLocal(r[0].id,docData);deleteDocLocal(oldId);}
+        saveToLocal();
+        renderTxTable();renderDashboard();populateFilters();
         showSyncStatus('Lançamento guardado!');
       }else{
         // A gravação na cloud falhou: o registo fica só local (por agora) e o utilizador é avisado.
@@ -1736,7 +1740,16 @@ function renderEmpPay(){
     </td></tr>`;}).join(''):`<tr><td colspan="6"><div class="empty">Sem pagamentos registados</div></td></tr>`;
 }
 function editTxFromEmp(id){editTx(id);}
-function deleteTxFromEmp(id){if(!confirm('Apagar este pagamento?'))return;txList=txList.filter(t=>t.id!==id);renderEmpPay();renderEmpMetrics();renderDashboard();}
+function deleteTxFromEmp(id){
+  if(!confirm('Apagar este pagamento?'))return;
+  const driveId=loadDocDriveId(id);
+  txList=txList.filter(t=>t.id!==id);
+  saveToLocal();
+  supaDelete('lancamentos',id).then(()=>showSyncStatus('Pagamento apagado!'));
+  deleteDocLocal(id);deleteDocDriveId(id);
+  if(driveId){gdriveDeleteFile(driveId).catch(e=>console.error('Falha ao apagar ficheiro do Drive:',e));}
+  renderEmpPay();renderEmpMetrics();renderDashboard();
+}
 function openEmpModal(){
   editEmpId=null;
   document.getElementById('empModalTitle').textContent='Novo empregado';
@@ -2230,15 +2243,18 @@ async function loadAllFromCloud(){
       supaGet('viaturas').catch(()=>[]),
     ]);
 
-    if(Array.isArray(tx)&&tx.length>0){
+    if(Array.isArray(tx)){
+      // O fetch já passou por testeRes.ok, portanto uma lista vazia significa mesmo
+      // "a cloud não tem lançamentos" — e não uma falha. Substitui sempre (reflete apagados).
       txList=tx.map(t=>({...t,valor:parseFloat(t.valor)||0}));
-      nextId=Math.max(...txList.map(t=>t.id))+1;
+      nextId=txList.length?Math.max(...txList.map(t=>t.id))+1:1;
       saveToLocal();
     }
     if(Array.isArray(fs)&&fs.length>0){fairs=fs;nextFairId=Math.max(...fairs.map(f=>f.id))+1;}
     if(Array.isArray(em)&&em.length>0){emps=em.map(e=>({...e,sal:parseFloat(e.sal)||0}));nextEmpId=Math.max(...emps.map(e=>e.id))+1;}
     if(Array.isArray(vi)&&vi.length>0){viats=vi;nextViatId=Math.max(...viats.map(v=>v.id))+1;}
 
+    lastCloudSync=Date.now();
     showSyncStatus('✓ '+tx.length+' lançamentos carregados!',true);
     initAutoPing();
   }catch(e){
@@ -2716,6 +2732,13 @@ function initApp(){
   populateFilters();
   // 2) Depois sincroniza com o Supabase (re-renderiza quando chegar)
   loadAllFromCloud();
+  // 3) Re-sincroniza sempre que a app volta a ficar visível (ex.: abrir o separador
+  //    no telemóvel depois de estar em segundo plano). Debounce de 10s para não repetir.
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='visible' && Date.now()-lastCloudSync>10000){
+      loadAllFromCloud();
+    }
+  });
 }
 // Executa mesmo que o evento de load já tenha passado
 if(document.readyState==='loading'){
