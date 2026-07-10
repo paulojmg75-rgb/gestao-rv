@@ -2598,6 +2598,7 @@ function gdriveInit(){
         gdriveTokenExpiry=Date.now()+((resp.expires_in?resp.expires_in*1000:3600000))-60000; // -1min margem
         try{localStorage.setItem('rv_gdrive_tok',JSON.stringify({t:gdriveToken,e:gdriveTokenExpiry}));}catch(e){}
         fila.forEach(p=>{try{p.ok&&p.ok();}catch(e){console.error(e);}});
+        flushPendingDriveUploads();
       }else{
         fila.forEach(p=>{try{p.err&&p.err(resp);}catch(e){console.error(e);}});
       }
@@ -2624,7 +2625,7 @@ function gdriveAutoConnect(){
     const raw=localStorage.getItem('rv_gdrive_tok');
     if(raw){ const o=JSON.parse(raw); if(o&&o.t&&o.e&&Date.now()<o.e){ gdriveToken=o.t; gdriveTokenExpiry=o.e; } }
   }catch(e){}
-  if(gdriveValid()) return; // já temos token válido em memória
+  if(gdriveValid()){ flushPendingDriveUploads(); return; } // já temos token válido em memória
   // Tenta renovar silenciosamente (só funciona se já autorizaste antes nesta conta Google)
   let tries=0;
   const tryConnect=()=>{
@@ -2837,6 +2838,7 @@ async function saveDocToDrive(txId, silent){
   try{
     const fileId=await archiveDocToDrive(txId, doc);
     saveDocDriveId(txId,fileId);
+    removePendingDrive(txId);
     if(!silent)showSyncStatus('✓ Fatura guardada no Google Drive com sucesso!',true);
   }catch(e){
     console.error('Falha ao guardar no Drive:',e);
@@ -2849,13 +2851,37 @@ async function saveDocToDrive(txId, silent){
 /* Chamado logo após gravar um lançamento com documento.
    - Drive ligado  → arquiva já e mostra "✓ Fatura guardada no Google Drive com sucesso!"
    - Drive desligado → pergunta se quer guardar (para não esquecer); se sim, liga e guarda. */
+/* Fila de faturas à espera de irem para o Drive (quando o Drive ainda não está ligado).
+   Guardada no localStorage para sobreviver a recargas. É esvaziada assim que houver token. */
+function addPendingDrive(txId){
+  try{const a=JSON.parse(localStorage.getItem('rv_drive_pending')||'[]');if(!a.includes(txId)){a.push(txId);localStorage.setItem('rv_drive_pending',JSON.stringify(a));}}catch(e){}
+}
+function removePendingDrive(txId){
+  try{let a=JSON.parse(localStorage.getItem('rv_drive_pending')||'[]');a=a.filter(x=>x!==txId);localStorage.setItem('rv_drive_pending',JSON.stringify(a));}catch(e){}
+}
+async function flushPendingDriveUploads(){
+  if(!gdriveValid())return;
+  let a=[];try{a=JSON.parse(localStorage.getItem('rv_drive_pending')||'[]');}catch(e){}
+  if(!a.length)return;
+  let enviadas=0;
+  for(const txId of a){
+    const doc=loadDocLocal(txId);
+    if(!doc){removePendingDrive(txId);continue;}
+    try{ const fileId=await archiveDocToDrive(txId,doc); saveDocDriveId(txId,fileId); removePendingDrive(txId); enviadas++; }
+    catch(e){console.error('Envio pendente falhou para',txId,e);}
+  }
+  if(enviadas)showSyncStatus('✓ '+enviadas+' fatura(s) pendente(s) enviada(s) para o Drive',true);
+}
+
+/* Chamado logo após gravar um lançamento com documento.
+   - Drive ligado  → envia já e mostra "✓ Fatura guardada no Google Drive com sucesso!"
+   - Drive desligado → fica pendente e sobe sozinha assim que ligares o Drive (uma vez). */
 function archiveOnSave(txId){
-  if(gdriveToken){
-    saveDocToDrive(txId); // não-silencioso: mostra a mensagem de sucesso
+  if(gdriveValid()){
+    saveDocToDrive(txId);
   }else{
-    if(confirm('Guardar esta fatura no Google Drive?\nAssim podes vê-la também no telemóvel / noutros dispositivos.')){
-      saveDocToDrive(txId);
-    }
+    addPendingDrive(txId);
+    showSyncStatus('Fatura guardada. Vai para o Drive assim que o ligares (fica pendente).',true);
   }
 }
 function initApp(){
