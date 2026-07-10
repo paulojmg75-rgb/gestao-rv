@@ -864,6 +864,9 @@ const COLS=['#185FA5','#0F6E56','#BA7517','#A32D2D','#3B6D11','#993C1D','#534AB7
 const GDRIVE_CLIENT_ID='184393297918-p9j93fdm11olm8b8r0la9hvqf1fojfhf.apps.googleusercontent.com';
 const GDRIVE_SCOPE='https://www.googleapis.com/auth/drive.file';
 let gdriveToken=null;
+let gdriveTokenExpiry=0;
+let gdriveClient=null;
+let gdrivePending=[];
 let lastCloudSync=0;
 const MESES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 const MN={janeiro:0,fevereiro:1,'março':2,abril:3,maio:4,junho:5,julho:6,agosto:7,setembro:8,outubro:9,novembro:10,dezembro:11};
@@ -1992,7 +1995,7 @@ async function fetchDocFromDrive(txId){
           resolve({nome:f.name,tipo:f.mimeType,data:dataUrl});
         }else resolve(null);
       }catch(e){console.error('Erro a recuperar documento do Drive:',e);resolve(null);}
-    });
+    }, ()=>resolve(null));
   });
 }
 
@@ -2578,18 +2581,57 @@ function aplicarFiltros(){
 }
 
 /* ---- GOOGLE DRIVE ---- */
-function gdriveAuth(callback){
-  if(gdriveToken){callback();return;}
-  const client=google.accounts.oauth2.initTokenClient({
+function gdriveValid(){ return gdriveToken && Date.now()<gdriveTokenExpiry; }
+
+/* Inicializa (uma vez) o cliente de token do Google. O callback do GIS é único,
+   por isso encaminhamos a resposta para a fila de pedidos pendentes. */
+function gdriveInit(){
+  if(gdriveClient) return gdriveClient;
+  if(!(window.google && google.accounts && google.accounts.oauth2)) return null;
+  gdriveClient=google.accounts.oauth2.initTokenClient({
     client_id:GDRIVE_CLIENT_ID,
     scope:GDRIVE_SCOPE,
     callback:(resp)=>{
-      if(resp.error){showSyncStatus('Erro ao ligar ao Google Drive',false);return;}
-      gdriveToken=resp.access_token;
-      callback();
+      const fila=gdrivePending; gdrivePending=[];
+      if(resp && resp.access_token){
+        gdriveToken=resp.access_token;
+        gdriveTokenExpiry=Date.now()+((resp.expires_in?resp.expires_in*1000:3600000))-60000; // -1min margem
+        try{localStorage.setItem('rv_gdrive_tok',JSON.stringify({t:gdriveToken,e:gdriveTokenExpiry}));}catch(e){}
+        fila.forEach(p=>{try{p.ok&&p.ok();}catch(e){console.error(e);}});
+      }else{
+        fila.forEach(p=>{try{p.err&&p.err(resp);}catch(e){console.error(e);}});
+      }
     }
   });
-  client.requestAccessToken();
+  return gdriveClient;
+}
+
+/* Garante um token válido e corre o callback. Renova em silêncio (prompt:'') — só pede
+   autorização visível na 1ª vez (ou se a sessão Google já não permitir silencioso). */
+function gdriveAuth(callback, onFail){
+  if(gdriveValid()){ callback&&callback(); return; }
+  gdriveInit();
+  if(!gdriveClient){ onFail&&onFail(); return; }
+  gdrivePending.push({ok:callback, err:onFail});
+  try{ gdriveClient.requestAccessToken({prompt:''}); }
+  catch(e){ try{gdriveClient.requestAccessToken();}catch(e2){onFail&&onFail(e2);} }
+}
+
+/* Restaura o token guardado (se ainda válido) e, se possível, renova em silêncio.
+   Chamado no arranque, para o Drive ficar "predefinido" sem pedir nada. */
+function gdriveAutoConnect(){
+  try{
+    const raw=localStorage.getItem('rv_gdrive_tok');
+    if(raw){ const o=JSON.parse(raw); if(o&&o.t&&o.e&&Date.now()<o.e){ gdriveToken=o.t; gdriveTokenExpiry=o.e; } }
+  }catch(e){}
+  if(gdriveValid()) return; // já temos token válido em memória
+  // Tenta renovar silenciosamente (só funciona se já autorizaste antes nesta conta Google)
+  let tries=0;
+  const tryConnect=()=>{
+    if(gdriveInit()){ gdriveAuth(()=>{}, ()=>{}); return; }
+    if(tries++<10) setTimeout(tryConnect,500); // espera o script do Google carregar
+  };
+  tryConnect();
 }
 
 /* Encontra ou cria uma pasta pelo nome, dentro de um parentId (ou raiz se omitido) */
@@ -2782,13 +2824,16 @@ async function archiveDocToDrive(txId, doc){
         const up=await upRes.json();
         resolve(up.id);
       }catch(e){reject(e);}
-    });
+    }, ()=>reject(new Error('Sem autorização do Google Drive')));
   });
 }
 
+const uploadsInFlight=new Set();
 async function saveDocToDrive(txId, silent){
+  if(uploadsInFlight.has(txId)){ if(!silent)showSyncStatus('Já a guardar no Drive, aguarda...',true); return; }
   const doc=loadDocLocal(txId);
   if(!doc){ if(!silent)showSyncStatus('Sem documento para guardar',false); return; }
+  uploadsInFlight.add(txId);
   try{
     const fileId=await archiveDocToDrive(txId, doc);
     saveDocDriveId(txId,fileId);
@@ -2796,6 +2841,8 @@ async function saveDocToDrive(txId, silent){
   }catch(e){
     console.error('Falha ao guardar no Drive:',e);
     if(!silent)showSyncStatus('Erro ao guardar no Drive',false);
+  }finally{
+    uploadsInFlight.delete(txId);
   }
 }
 
@@ -2820,6 +2867,8 @@ function initApp(){
   populateFilters();
   // 2) Depois sincroniza com o Supabase (re-renderiza quando chegar)
   loadAllFromCloud();
+  // 2b) Liga o Google Drive automaticamente (se já foi autorizado antes)
+  gdriveAutoConnect();
   // 3) Re-sincroniza sempre que a app volta a ficar visível (ex.: abrir o separador
   //    no telemóvel depois de estar em segundo plano). Debounce de 10s para não repetir.
   document.addEventListener('visibilitychange',()=>{
