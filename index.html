@@ -213,6 +213,9 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
 .mobile-more-item{display:flex;align-items:center;gap:12px;padding:14px 20px;font-size:14px;font-weight:600;color:var(--text);cursor:pointer}
 .mobile-more-item:active{background:var(--bg3)}
 .mobile-more-item i{font-size:19px;color:var(--accent);width:24px;text-align:center}
+.drive-more-item{display:flex;align-items:center;gap:12px;padding:14px 20px;font-size:14px;font-weight:600;color:var(--text);cursor:pointer}
+.drive-more-item:active{background:var(--bg3)}
+.drive-more-item i{font-size:19px;color:var(--amber);width:24px;text-align:center}
 .mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--side);border-top:1px solid var(--side-line);padding:5px 0;z-index:100;justify-content:space-around}
 .mobile-nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:3px 6px;cursor:pointer;color:var(--side-text-dim);font-size:8px;font-weight:600;border-radius:var(--radius);transition:all .15s;flex:1}
 .mobile-nav-item i{font-size:20px}
@@ -314,6 +317,10 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
     <div class="logo-title" style="font-size:13px">Realidade Virtual</div>
     <div class="logo-sub" style="font-size:9px">Gestão de Simuladores</div>
   </div>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+    <button class="btn btn-icon" onclick="loadAllFromCloud()" title="Sincronizar agora" style="color:var(--blue);border-color:var(--blue-l);background:var(--blue-l);padding:7px 9px"><i class="ti ti-refresh"></i></button>
+    <button class="btn btn-icon" onclick="gdriveConnectInteractive()" title="Ligar Google Drive" style="color:var(--amber);border-color:var(--amber-l);background:var(--amber-l);padding:7px 9px"><i class="ti ti-brand-google-drive"></i></button>
+  </div>
 </header>
 
 <!-- MOBILE BOTTOM NAV -->
@@ -333,6 +340,8 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   <div class="mobile-more-item" data-page="viaturas"><i class="ti ti-car"></i><span>Viaturas</span></div>
   <div class="mobile-more-item" data-page="relatorio"><i class="ti ti-chart-bar"></i><span>Relatório</span></div>
   <div class="mobile-more-item" data-page="configuracoes"><i class="ti ti-settings"></i><span>Configurações</span></div>
+  <div class="drive-more-item" onclick="closeMobileMore();gdriveConnectInteractive()"><i class="ti ti-brand-google-drive"></i><span>Ligar Google Drive</span></div>
+  <div class="drive-more-item" onclick="closeMobileMore();loadAllFromCloud()"><i class="ti ti-refresh"></i><span>Sincronizar agora</span></div>
 </div>
 
 <!-- MAIN -->
@@ -2611,13 +2620,25 @@ function gdriveInit(){
 
 /* Garante um token válido e corre o callback. Renova em silêncio (prompt:'') — só pede
    autorização visível na 1ª vez (ou se a sessão Google já não permitir silencioso). */
-function gdriveAuth(callback, onFail){
+function gdriveAuth(callback, onFail, silent){
   if(gdriveValid()){ callback&&callback(); return; }
   gdriveInit();
   if(!gdriveClient){ onFail&&onFail(); return; }
   gdrivePending.push({ok:callback, err:onFail});
-  try{ gdriveClient.requestAccessToken({prompt:''}); }
-  catch(e){ try{gdriveClient.requestAccessToken();}catch(e2){onFail&&onFail(e2);} }
+  try{
+    // silent:true → sem UI (só resulta se já autorizaste antes). Caso normal → mostra o ecrã
+    // de autorização quando é preciso (essencial na 1ª vez, sobretudo no telemóvel).
+    if(silent) gdriveClient.requestAccessToken({prompt:''});
+    else gdriveClient.requestAccessToken();
+  }catch(e){ onFail&&onFail(e); }
+}
+
+/* Ligação explícita ao Drive (botão do utilizador) — sempre interativa. */
+function gdriveConnectInteractive(){
+  gdriveAuth(
+    ()=>showSyncStatus('Google Drive ligado! ✓',true),
+    ()=>showSyncStatus('Não foi possível ligar ao Google Drive',false)
+  );
 }
 
 /* Restaura o token guardado (se ainda válido) e, se possível, renova em silêncio.
@@ -2631,7 +2652,7 @@ function gdriveAutoConnect(){
   // Tenta renovar silenciosamente (só funciona se já autorizaste antes nesta conta Google)
   let tries=0;
   const tryConnect=()=>{
-    if(gdriveInit()){ gdriveAuth(()=>{}, ()=>{}); return; }
+    if(gdriveInit()){ gdriveAuth(()=>{}, ()=>{}, true); return; }
     if(tries++<10) setTimeout(tryConnect,500); // espera o script do Google carregar
   };
   tryConnect();
