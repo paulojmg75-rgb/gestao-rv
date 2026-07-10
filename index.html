@@ -1398,6 +1398,10 @@ function saveTx(){
   const empregado=document.getElementById('f-empregado').value||'';
   const viatura=(cat==='Combustivel'?(document.getElementById('f-viat').value||''):'');
   if(!data||isNaN(valor)||valor<=0){alert('Por favor preenche a data e um valor válido (maior que zero).');return;}
+  // Se vamos anexar documento e o Drive ainda não está ligado, aproveita ESTE toque (gesto do
+  // botão Guardar) para ligar — a autorização do Google só é permitida a partir de um gesto.
+  // Assim que ligar, a fatura pendente sobe sozinha (flushPendingDriveUploads).
+  if(docData && !gdriveValid()){ gdriveAuth(()=>{}, ()=>{}); }
   const splitAtivo=splitEnabled&&tipo==='Receita';
   const pct=splitAtivo?(parseFloat(document.getElementById('split-pct').value)||50):100;
   const valorFinal=splitAtivo?Math.round(valor*(pct/100)*100)/100:valor;
@@ -2881,7 +2885,7 @@ function archiveOnSave(txId){
     saveDocToDrive(txId);
   }else{
     addPendingDrive(txId);
-    showSyncStatus('Fatura guardada. Vai para o Drive assim que o ligares (fica pendente).',true);
+    showSyncStatus('Fatura guardada. A ligar ao Drive para a enviar...',true);
   }
 }
 function initApp(){
