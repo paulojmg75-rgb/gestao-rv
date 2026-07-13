@@ -402,10 +402,9 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
     </select>
     <select id="filterEmp" onchange="renderTxTable()" style="width:auto;padding:6px 10px;font-size:12px"><option value="">Todos os empregados</option></select>
     <span id="tx-count" style="font-size:11px;color:var(--text2);margin-left:auto"></span>
-    <button id="btnDelSel" onclick="deleteSelectedTx()" class="btn btn-sm" style="display:none;margin-left:10px;color:#fff;background:var(--red);border-color:var(--red)"><i class="ti ti-trash"></i> Apagar selecionados (<span id="selCount">0</span>)</button>
   </div>
   <div class="card" style="padding:0;overflow:hidden">
-    <table><thead><tr><th style="width:34px;text-align:center"><input type="checkbox" id="txSelectAll" onclick="toggleTxSelectAll(this.checked)" title="Selecionar todos" style="cursor:pointer"></th><th>#</th><th>Data</th><th>Mês</th><th>Categoria</th><th>Conta / Local</th><th>Pagamento</th><th>Empregado</th><th>Tipo</th><th style="text-align:right">Valor</th><th style="text-align:center">Ações</th></tr></thead><tbody id="txBody"></tbody></table>
+    <table><thead><tr><th>#</th><th>Data</th><th>Mês</th><th>Categoria</th><th>Conta / Local</th><th>Pagamento</th><th>Empregado</th><th>Tipo</th><th style="text-align:right">Valor</th><th style="text-align:center">Ações</th></tr></thead><tbody id="txBody"></tbody></table>
   </div>
 </div>
 
@@ -490,6 +489,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
       <div class="card">
         <div class="card-title" style="justify-content:space-between">
           <span><i class="ti ti-calendar-event"></i> Feiras</span>
+          <button class="btn btn-sm" onclick="clearCfgList('feiras')" title="Apagar todas as feiras" style="color:var(--red);border-color:var(--red-l);background:var(--red-l)"><i class="ti ti-trash"></i></button>
           <button class="btn btn-sm btn-primary" onclick="openFairModal()"><i class="ti ti-plus"></i> Nova</button>
         </div>
         <div id="cfg-feiras"></div>
@@ -497,6 +497,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
       <div class="card">
         <div class="card-title" style="justify-content:space-between">
           <span><i class="ti ti-map-pin"></i> Eventos</span>
+          <button class="btn btn-sm" onclick="clearCfgList('contas')" title="Apagar todos os eventos" style="color:var(--red);border-color:var(--red-l);background:var(--red-l)"><i class="ti ti-trash"></i></button>
           <button class="btn btn-sm btn-primary" onclick="openCfgContaModal()"><i class="ti ti-plus"></i> Novo</button>
         </div>
         <div id="cfg-contas"></div>
@@ -507,6 +508,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
       <div class="card">
         <div class="card-title" style="justify-content:space-between">
           <span><i class="ti ti-arrow-up-circle"></i> Tipos de Receita</span>
+          <button class="btn btn-sm" onclick="clearCfgList('catsRec')" title="Apagar todas as categorias de receita" style="color:var(--red);border-color:var(--red-l);background:var(--red-l)"><i class="ti ti-trash"></i></button>
           <button class="btn btn-sm btn-primary" onclick="openCfgCatModal('receita')"><i class="ti ti-plus"></i> Nova</button>
         </div>
         <div id="cfg-cats-rec"></div>
@@ -514,6 +516,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
       <div class="card">
         <div class="card-title" style="justify-content:space-between">
           <span><i class="ti ti-users"></i> Empregados</span>
+          <button class="btn btn-sm" onclick="clearCfgList('emps')" title="Apagar todos os empregados" style="color:var(--red);border-color:var(--red-l);background:var(--red-l)"><i class="ti ti-trash"></i></button>
           <button class="btn btn-sm btn-primary" onclick="openEmpModal()"><i class="ti ti-plus"></i> Novo</button>
         </div>
         <div id="cfg-emps"></div>
@@ -521,6 +524,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
       <div class="card">
         <div class="card-title" style="justify-content:space-between">
           <span><i class="ti ti-car"></i> Viaturas</span>
+          <button class="btn btn-sm" onclick="clearCfgList('viats')" title="Apagar todas as viaturas" style="color:var(--red);border-color:var(--red-l);background:var(--red-l)"><i class="ti ti-trash"></i></button>
           <button class="btn btn-sm btn-primary" onclick="openViatModal()"><i class="ti ti-plus"></i> Nova</button>
         </div>
         <div id="cfg-viats"></div>
@@ -531,6 +535,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
       <div class="card">
         <div class="card-title" style="justify-content:space-between">
           <span><i class="ti ti-arrow-down-circle"></i> Categorias de Despesa</span>
+          <button class="btn btn-sm" onclick="clearCfgList('catsDesp')" title="Apagar todas as categorias de despesa" style="color:var(--red);border-color:var(--red-l);background:var(--red-l)"><i class="ti ti-trash"></i></button>
           <button class="btn btn-sm btn-primary" onclick="openCfgCatModal('despesa')"><i class="ti ti-plus"></i> Nova</button>
         </div>
         <div id="cfg-cats-desp"></div>
@@ -1257,7 +1262,6 @@ function renderTxTable(){
   if(cnt)cnt.textContent=data.length+' registos · Saldo: '+fmt(saldo);
   const meioIcon={Dinheiro:'💵',Cartão:'💳',MBWay:'📱','Transferência':'🏦',Cheque:'📄',Outro:'🔹'};
   document.getElementById('txBody').innerHTML=data.length?data.map(t=>`<tr>
-    <td style="text-align:center"><input type="checkbox" class="tx-check" data-id="${t.id}" onclick="toggleTxSelect(${t.id},this.checked)" ${selectedTx.has(t.id)?'checked':''} style="cursor:pointer"></td>
     <td style="color:var(--text3);font-size:10px">${t.id}</td>
     <td>${t.data}</td><td style="text-transform:capitalize">${t.mes}</td>
     <td>${t.cat}</td>
@@ -1271,53 +1275,9 @@ function renderTxTable(){
       <button class="btn btn-sm btn-icon" onclick="saveDocToDrive(${t.id})" title="Guardar no Drive" style="color:var(--teal);background:var(--teal-l);border-color:var(--teal-l)"><i class="ti ti-brand-google-drive" style="font-size:11px"></i></button>`:''}
       <button class="btn btn-sm btn-icon btn-edit" onclick="editTx(${t.id})" title="Corrigir"><i class="ti ti-pencil" style="font-size:12px"></i></button>
       <button class="btn btn-sm btn-icon btn-del" onclick="deleteTx(${t.id})" title="Apagar"><i class="ti ti-trash" style="font-size:12px"></i></button>
-    </td></tr>`).join(''):`<tr><td colspan="11"><div class="empty"><i class="ti ti-inbox"></i>Sem registos para os filtros selecionados</div></td></tr>`;
-  updateSelUI();
+    </td></tr>`).join(''):`<tr><td colspan="10"><div class="empty"><i class="ti ti-inbox"></i>Sem registos para os filtros selecionados</div></td></tr>`;
 }
 function filterTx(f,el){activeFilter=f;document.querySelectorAll('.tab-bar .tab').forEach(x=>x.classList.remove('active'));el.classList.add('active');renderTxTable();}
-let selectedTx=new Set();
-function toggleTxSelect(id, checked){
-  if(checked)selectedTx.add(id); else selectedTx.delete(id);
-  updateSelUI();
-}
-function toggleTxSelectAll(checked){
-  document.querySelectorAll('.tx-check').forEach(cb=>{
-    const id=parseInt(cb.dataset.id);
-    cb.checked=checked;
-    if(checked)selectedTx.add(id); else selectedTx.delete(id);
-  });
-  updateSelUI();
-}
-function updateSelUI(){
-  const btn=document.getElementById('btnDelSel');
-  const cnt=document.getElementById('selCount');
-  const all=document.getElementById('txSelectAll');
-  const visible=document.querySelectorAll('.tx-check');
-  const n=selectedTx.size;
-  if(cnt)cnt.textContent=n;
-  if(btn)btn.style.display=n>0?'inline-flex':'none';
-  if(all){
-    let marc=0;visible.forEach(cb=>{if(selectedTx.has(parseInt(cb.dataset.id)))marc++;});
-    all.checked=visible.length>0&&marc===visible.length;
-    all.indeterminate=marc>0&&marc<visible.length;
-  }
-}
-async function deleteSelectedTx(){
-  const ids=[...selectedTx];
-  if(!ids.length)return;
-  if(!confirm('Apagar '+ids.length+' lançamento(s) selecionado(s)? Esta ação não pode ser desfeita.'))return;
-  for(const id of ids){
-    const driveId=loadDocDriveId(id);
-    txList=txList.filter(t=>t.id!==id);
-    deleteDocLocal(id);deleteDocDriveId(id);
-    supaDelete('lancamentos',id);
-    if(driveId){ gdriveDeleteFile(driveId).catch(e=>console.error('Falha ao apagar ficheiro do Drive:',e)); }
-  }
-  selectedTx.clear();
-  saveToLocal();
-  renderTxTable();renderDashboard();populateFilters();
-  showSyncStatus(ids.length+' lançamento(s) apagado(s)!');
-}
 async function deleteTx(id){
   if(!confirm('Apagar este lançamento? Esta ação não pode ser desfeita.'))return;
   const driveId=loadDocDriveId(id);
@@ -2686,7 +2646,23 @@ function editCfgConta(idx){
 function deleteCfgConta(idx){
   if(!confirm(`Eliminar "${contas[idx]}"?`))return;
   contas.splice(idx,1);
+  saveToLocal();
   renderConfiguracoes();
+}
+/* Apaga TODA uma lista de Configurações (só essa; não toca nas outras) */
+function clearCfgList(tipo){
+  const label={feiras:'as feiras',contas:'os eventos/locais',emps:'os empregados',viats:'as viaturas',catsRec:'as categorias de receita',catsDesp:'as categorias de despesa'}[tipo];
+  if(!label)return;
+  if(!confirm('Apagar TODAS '+label+'?\nEsta ação não pode ser desfeita — mas NÃO afeta as outras listas.'))return;
+  if(tipo==='feiras'){ fairs.forEach(f=>supaDelete('feiras',f.id)); fairs=[]; }
+  else if(tipo==='emps'){ emps.forEach(e=>supaDelete('empregados',e.id)); emps=[]; }
+  else if(tipo==='viats'){ viats.forEach(v=>supaDelete('viaturas',v.id)); viats=[]; }
+  else if(tipo==='catsRec'){ catsRec=[]; }
+  else if(tipo==='catsDesp'){ catsDesp=[]; }
+  else if(tipo==='contas'){ contas=[]; }
+  saveToLocal();
+  renderConfiguracoes(); renderDashboard(); populateFilters();
+  showSyncStatus('Lista apagada!');
 }
 function saveCfgConta(){
   const nome=document.getElementById('cfg-conta-nome').value.trim();
