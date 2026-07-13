@@ -298,6 +298,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   <div class="nav-divider"></div>
   <div class="nav-item" data-page="filtros"><i class="ti ti-filter"></i> Filtros</div>
   <div class="nav-item" data-page="relatorio"><i class="ti ti-chart-bar"></i> Relatório</div>
+  <div class="nav-item" data-page="comparar"><i class="ti ti-arrows-left-right"></i> Comparar</div>
   <div class="nav-divider"></div>
   <div class="nav-item" data-page="configuracoes"><i class="ti ti-settings"></i> Configurações</div>
   <div class="topbar-actions">
@@ -339,6 +340,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   <div class="mobile-more-item" data-page="empregados"><i class="ti ti-users"></i><span>Empregados</span></div>
   <div class="mobile-more-item" data-page="viaturas"><i class="ti ti-car"></i><span>Viaturas</span></div>
   <div class="mobile-more-item" data-page="relatorio"><i class="ti ti-chart-bar"></i><span>Relatório</span></div>
+  <div class="mobile-more-item" data-page="comparar"><i class="ti ti-arrows-left-right"></i><span>Comparar</span></div>
   <div class="mobile-more-item" data-page="configuracoes"><i class="ti ti-settings"></i><span>Configurações</span></div>
   <div class="drive-more-item" onclick="closeMobileMore();gdriveConnectInteractive()"><i class="ti ti-brand-google-drive"></i><span>Ligar Google Drive</span></div>
   <div class="drive-more-item" onclick="closeMobileMore();loadAllFromCloud()"><i class="ti ti-refresh"></i><span>Sincronizar agora</span></div>
@@ -399,9 +401,10 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
     </select>
     <select id="filterEmp" onchange="renderTxTable()" style="width:auto;padding:6px 10px;font-size:12px"><option value="">Todos os empregados</option></select>
     <span id="tx-count" style="font-size:11px;color:var(--text2);margin-left:auto"></span>
+    <button id="btnDelSel" onclick="deleteSelectedTx()" class="btn btn-sm" style="display:none;margin-left:10px;color:#fff;background:var(--red);border-color:var(--red)"><i class="ti ti-trash"></i> Apagar selecionados (<span id="selCount">0</span>)</button>
   </div>
   <div class="card" style="padding:0;overflow:hidden">
-    <table><thead><tr><th>#</th><th>Data</th><th>Mês</th><th>Categoria</th><th>Conta / Local</th><th>Pagamento</th><th>Empregado</th><th>Tipo</th><th style="text-align:right">Valor</th><th style="text-align:center">Ações</th></tr></thead><tbody id="txBody"></tbody></table>
+    <table><thead><tr><th style="width:34px;text-align:center"><input type="checkbox" id="txSelectAll" onclick="toggleTxSelectAll(this.checked)" title="Selecionar todos" style="cursor:pointer"></th><th>#</th><th>Data</th><th>Mês</th><th>Categoria</th><th>Conta / Local</th><th>Pagamento</th><th>Empregado</th><th>Tipo</th><th style="text-align:right">Valor</th><th style="text-align:center">Ações</th></tr></thead><tbody id="txBody"></tbody></table>
   </div>
 </div>
 
@@ -658,6 +661,30 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
     <div class="tab" onclick="showReport('anual',this)">Anual</div>
   </div>
   <div id="reportArea"></div>
+</div>
+
+<div class="page" id="page-comparar">
+  <div class="page-header">
+    <div><h1>Comparar</h1><p>Compara o movimento financeiro entre anos ou entre edições da mesma feira</p></div>
+  </div>
+  <div class="tab-bar">
+    <div class="tab active" onclick="showComparar('ano',this)">Por ano</div>
+    <div class="tab" onclick="showComparar('feira',this)">Por feira</div>
+  </div>
+  <div id="compAno">
+    <div class="card" style="padding:14px;margin-bottom:14px;display:flex;flex-wrap:wrap;align-items:center;gap:14px">
+      <div style="display:flex;align-items:center;gap:8px"><label style="font-size:12px;color:var(--text2)">Ano A:</label><select id="compAnoA" onchange="renderCompararAno()" style="padding:6px 10px;font-size:13px;border-radius:var(--radius);border:.5px solid var(--border2)"></select></div>
+      <div style="font-weight:700;color:var(--text2)">vs</div>
+      <div style="display:flex;align-items:center;gap:8px"><label style="font-size:12px;color:var(--text2)">Ano B:</label><select id="compAnoB" onchange="renderCompararAno()" style="padding:6px 10px;font-size:13px;border-radius:var(--radius);border:.5px solid var(--border2)"></select></div>
+    </div>
+    <div id="compAnoResult"></div>
+  </div>
+  <div id="compFeira" style="display:none">
+    <div class="card" style="padding:14px;margin-bottom:14px;display:flex;flex-wrap:wrap;align-items:center;gap:14px">
+      <div style="display:flex;align-items:center;gap:8px"><label style="font-size:12px;color:var(--text2)">Feira:</label><select id="compFeiraNome" onchange="renderCompararFeira()" style="padding:6px 10px;font-size:13px;border-radius:var(--radius);border:.5px solid var(--border2)"></select></div>
+    </div>
+    <div id="compFeiraResult"></div>
+  </div>
 </div>
 
 </div><!-- /main -->
@@ -1102,6 +1129,7 @@ function navTo(p){
   if(p==='empregados'){renderEmpMetrics();renderEmpList();renderEmpPay();}
   if(p==='viaturas'){renderViats();renderCombust();}
   if(p==='relatorio'){renderReport('mensal');}
+  if(p==='comparar'){initComparar();}
   if(p==='filtros'){initFiltros();}
   if(p==='configuracoes'){renderConfiguracoes();}
   closeMobileMore();
@@ -1228,6 +1256,7 @@ function renderTxTable(){
   if(cnt)cnt.textContent=data.length+' registos · Saldo: '+fmt(saldo);
   const meioIcon={Dinheiro:'💵',Cartão:'💳',MBWay:'📱','Transferência':'🏦',Cheque:'📄',Outro:'🔹'};
   document.getElementById('txBody').innerHTML=data.length?data.map(t=>`<tr>
+    <td style="text-align:center"><input type="checkbox" class="tx-check" data-id="${t.id}" onclick="toggleTxSelect(${t.id},this.checked)" ${selectedTx.has(t.id)?'checked':''} style="cursor:pointer"></td>
     <td style="color:var(--text3);font-size:10px">${t.id}</td>
     <td>${t.data}</td><td style="text-transform:capitalize">${t.mes}</td>
     <td>${t.cat}</td>
@@ -1241,9 +1270,53 @@ function renderTxTable(){
       <button class="btn btn-sm btn-icon" onclick="saveDocToDrive(${t.id})" title="Guardar no Drive" style="color:var(--teal);background:var(--teal-l);border-color:var(--teal-l)"><i class="ti ti-brand-google-drive" style="font-size:11px"></i></button>`:''}
       <button class="btn btn-sm btn-icon btn-edit" onclick="editTx(${t.id})" title="Corrigir"><i class="ti ti-pencil" style="font-size:12px"></i></button>
       <button class="btn btn-sm btn-icon btn-del" onclick="deleteTx(${t.id})" title="Apagar"><i class="ti ti-trash" style="font-size:12px"></i></button>
-    </td></tr>`).join(''):`<tr><td colspan="10"><div class="empty"><i class="ti ti-inbox"></i>Sem registos para os filtros selecionados</div></td></tr>`;
+    </td></tr>`).join(''):`<tr><td colspan="11"><div class="empty"><i class="ti ti-inbox"></i>Sem registos para os filtros selecionados</div></td></tr>`;
+  updateSelUI();
 }
 function filterTx(f,el){activeFilter=f;document.querySelectorAll('.tab-bar .tab').forEach(x=>x.classList.remove('active'));el.classList.add('active');renderTxTable();}
+let selectedTx=new Set();
+function toggleTxSelect(id, checked){
+  if(checked)selectedTx.add(id); else selectedTx.delete(id);
+  updateSelUI();
+}
+function toggleTxSelectAll(checked){
+  document.querySelectorAll('.tx-check').forEach(cb=>{
+    const id=parseInt(cb.dataset.id);
+    cb.checked=checked;
+    if(checked)selectedTx.add(id); else selectedTx.delete(id);
+  });
+  updateSelUI();
+}
+function updateSelUI(){
+  const btn=document.getElementById('btnDelSel');
+  const cnt=document.getElementById('selCount');
+  const all=document.getElementById('txSelectAll');
+  const visible=document.querySelectorAll('.tx-check');
+  const n=selectedTx.size;
+  if(cnt)cnt.textContent=n;
+  if(btn)btn.style.display=n>0?'inline-flex':'none';
+  if(all){
+    let marc=0;visible.forEach(cb=>{if(selectedTx.has(parseInt(cb.dataset.id)))marc++;});
+    all.checked=visible.length>0&&marc===visible.length;
+    all.indeterminate=marc>0&&marc<visible.length;
+  }
+}
+async function deleteSelectedTx(){
+  const ids=[...selectedTx];
+  if(!ids.length)return;
+  if(!confirm('Apagar '+ids.length+' lançamento(s) selecionado(s)? Esta ação não pode ser desfeita.'))return;
+  for(const id of ids){
+    const driveId=loadDocDriveId(id);
+    txList=txList.filter(t=>t.id!==id);
+    deleteDocLocal(id);deleteDocDriveId(id);
+    supaDelete('lancamentos',id);
+    if(driveId){ gdriveDeleteFile(driveId).catch(e=>console.error('Falha ao apagar ficheiro do Drive:',e)); }
+  }
+  selectedTx.clear();
+  saveToLocal();
+  renderTxTable();renderDashboard();populateFilters();
+  showSyncStatus(ids.length+' lançamento(s) apagado(s)!');
+}
 async function deleteTx(id){
   if(!confirm('Apagar este lançamento? Esta ação não pode ser desfeita.'))return;
   const driveId=loadDocDriveId(id);
@@ -1954,6 +2027,104 @@ function showReport(type,el){
   el.classList.add('active');
   el.dataset.type=type;
   renderReport(type);
+}
+
+/* ---- COMPARAR (por ano / por feira) ---- */
+function compYr(t){ return (t.data||'').slice(0,4) || String(t.ano||''); }
+function comparAnosDisponiveis(){
+  const set=new Set();
+  txList.forEach(t=>{const y=compYr(t);if(y)set.add(y);});
+  return [...set].sort();
+}
+function somaPeriodo(pred){
+  let rec=0,desp=0,n=0;
+  txList.forEach(t=>{ if(pred(t)){ if(t.tipo==='Receita')rec+=t.valor; else desp+=t.valor; n++; } });
+  return {rec,desp,saldo:rec-desp,n};
+}
+function compCard(titulo, s){
+  return `<div class="card" style="padding:16px;flex:1;min-width:150px">
+    <div style="font-size:12px;color:var(--text2);font-weight:700;margin-bottom:8px">${titulo}</div>
+    <div style="font-size:12px;color:var(--teal)">Receita: <b>${fmt(s.rec)}</b></div>
+    <div style="font-size:12px;color:var(--red)">Despesa: <b>${fmt(s.desp)}</b></div>
+    <div style="font-size:15px;font-weight:700;margin-top:6px;color:${s.saldo>=0?'var(--teal)':'var(--red)'}">Saldo: ${fmt(s.saldo)}</div>
+    <div style="font-size:10px;color:var(--text3);margin-top:4px">${s.n} registos</div>
+  </div>`;
+}
+function diffLinha(label, va, vb, isDesp){
+  const dif=vb-va;
+  const cor = isDesp ? (dif<=0?'var(--teal)':'var(--red)') : (dif>=0?'var(--teal)':'var(--red)');
+  const sinal = dif>0?'+':'';
+  const pct = va!==0 ? ' ('+sinal+Math.round(dif/Math.abs(va)*100)+'%)' : '';
+  return `<tr><td style="font-weight:600">${label}</td><td style="text-align:right">${fmt(va)}</td><td style="text-align:right">${fmt(vb)}</td><td style="text-align:right;color:${cor};font-weight:600">${sinal}${fmt(dif)}${pct}</td></tr>`;
+}
+function initComparar(){
+  const anos=comparAnosDisponiveis();
+  const nowY=String(new Date().getFullYear());
+  const a=document.getElementById('compAnoA'), b=document.getElementById('compAnoB');
+  if(a&&b){
+    const opts=anos.length?anos:[nowY];
+    a.innerHTML=opts.map(y=>`<option>${y}</option>`).join('');
+    b.innerHTML=opts.map(y=>`<option>${y}</option>`).join('');
+    if(opts.length>=2){a.value=opts[opts.length-2];b.value=opts[opts.length-1];}
+    else{a.value=opts[0];b.value=opts[0];}
+  }
+  const nomes=[...new Set(fairs.map(f=>f.nome).filter(Boolean))].sort();
+  const fs=document.getElementById('compFeiraNome');
+  if(fs)fs.innerHTML=nomes.length?nomes.map(n=>`<option>${n}</option>`).join(''):'<option value="">(sem feiras registadas)</option>';
+  renderCompararAno();
+  renderCompararFeira();
+}
+function showComparar(mode,el){
+  document.querySelectorAll('#page-comparar .tab').forEach(x=>x.classList.remove('active'));el.classList.add('active');
+  document.getElementById('compAno').style.display=mode==='ano'?'block':'none';
+  document.getElementById('compFeira').style.display=mode==='feira'?'block':'none';
+}
+function renderCompararAno(){
+  const A=document.getElementById('compAnoA')?.value, B=document.getElementById('compAnoB')?.value;
+  const box=document.getElementById('compAnoResult'); if(!box)return;
+  if(!A||!B){box.innerHTML='';return;}
+  const sa=somaPeriodo(t=>compYr(t)===A), sb=somaPeriodo(t=>compYr(t)===B);
+  const meses=['01','02','03','04','05','06','07','08','09','10','11','12'];
+  const nomeMes={'01':'Janeiro','02':'Fevereiro','03':'Março','04':'Abril','05':'Maio','06':'Junho','07':'Julho','08':'Agosto','09':'Setembro','10':'Outubro','11':'Novembro','12':'Dezembro'};
+  let linhas='';
+  meses.forEach(m=>{
+    const saMes=somaPeriodo(t=>compYr(t)===A && (t.data||'').slice(5,7)===m);
+    const sbMes=somaPeriodo(t=>compYr(t)===B && (t.data||'').slice(5,7)===m);
+    if(saMes.n||sbMes.n) linhas+=diffLinha(nomeMes[m], saMes.saldo, sbMes.saldo,false);
+  });
+  box.innerHTML=`
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">${compCard('Ano '+A, sa)}${compCard('Ano '+B, sb)}</div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <table><thead><tr><th></th><th style="text-align:right">${A}</th><th style="text-align:right">${B}</th><th style="text-align:right">Diferença</th></tr></thead>
+      <tbody>
+        ${diffLinha('Receita total', sa.rec, sb.rec,false)}
+        ${diffLinha('Despesa total', sa.desp, sb.desp,true)}
+        ${diffLinha('Saldo', sa.saldo, sb.saldo,false)}
+        <tr><td colspan="4" style="background:var(--bg2);font-size:11px;font-weight:700;color:var(--text2);padding:6px 12px">Saldo por mês</td></tr>
+        ${linhas||'<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:12px">Sem dados nestes anos</td></tr>'}
+      </tbody></table>
+    </div>`;
+}
+function renderCompararFeira(){
+  const nome=document.getElementById('compFeiraNome')?.value;
+  const box=document.getElementById('compFeiraResult'); if(!box)return;
+  if(!nome){box.innerHTML='<div class="empty" style="padding:20px"><i class="ti ti-calendar-off"></i>Sem feiras registadas para comparar</div>';return;}
+  const edicoes=fairs.filter(f=>f.nome===nome).slice().sort((a,b)=>(a.inicio||'').localeCompare(b.inicio||''));
+  if(!edicoes.length){box.innerHTML='';return;}
+  const dados=edicoes.map(f=>{
+    const s=somaPeriodo(t=>(t.data||'')>=f.inicio && (t.data||'')<=f.fim);
+    const rotulo=(f.ano||((f.inicio||'').slice(0,4)));
+    return {rotulo, f, s};
+  });
+  let cards=dados.map(d=>compCard(nome+' '+d.rotulo, d.s)).join('');
+  let head=`<th></th>`+dados.map(d=>`<th style="text-align:right">${d.rotulo}</th>`).join('');
+  let rRec=`<tr><td style="font-weight:600;color:var(--teal)">Receita</td>`+dados.map(d=>`<td style="text-align:right">${fmt(d.s.rec)}</td>`).join('')+`</tr>`;
+  let rDesp=`<tr><td style="font-weight:600;color:var(--red)">Despesa</td>`+dados.map(d=>`<td style="text-align:right">${fmt(d.s.desp)}</td>`).join('')+`</tr>`;
+  let rSaldo=`<tr><td style="font-weight:700">Saldo</td>`+dados.map(d=>`<td style="text-align:right;font-weight:700;color:${d.s.saldo>=0?'var(--teal)':'var(--red)'}">${fmt(d.s.saldo)}</td>`).join('')+`</tr>`;
+  box.innerHTML=`
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">${cards}</div>
+    <div class="card" style="padding:0;overflow:hidden"><table><thead><tr>${head}</tr></thead><tbody>${rRec}${rDesp}${rSaldo}</tbody></table></div>
+    <div style="font-size:11px;color:var(--text3);margin-top:8px">Cada edição soma os lançamentos entre as datas de início e fim da feira.</div>`;
 }
 
 /* ---- DOCUMENTOS ---- */
