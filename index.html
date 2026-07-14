@@ -1318,6 +1318,7 @@ function openTxModal(){
 function editTx(id){
   const t=txList.find(x=>x.id===id);if(!t)return;
   editTxId=id;
+  setSplitOff(); // não reaplicar a partilha sobre um valor/nota já partilhados
   document.getElementById('txModalTitle').innerHTML='Corrigir lançamento <span class="edit-badge">Edição</span>';
   document.getElementById('editBanner').style.display='flex';
   document.getElementById('f-tipo').value=t.tipo;
@@ -2443,9 +2444,12 @@ async function loadAllFromCloud(){
     ]);
 
     if(Array.isArray(tx)){
-      // O fetch já passou por testeRes.ok, portanto uma lista vazia significa mesmo
-      // "a cloud não tem lançamentos" — e não uma falha. Substitui sempre (reflete apagados).
-      txList=tx.map(t=>({...t,valor:parseFloat(t.valor)||0}));
+      // A cloud é a fonte principal, MAS preservamos os lançamentos locais que ainda não
+      // existem na cloud (ex.: importados de Excel ou criados offline), para nunca se perderem.
+      const cloud=tx.map(t=>({...t,valor:parseFloat(t.valor)||0}));
+      const cloudIds=new Set(cloud.map(t=>t.id));
+      const locaisNaoSync=txList.filter(t=>!cloudIds.has(t.id));
+      txList=[...cloud, ...locaisNaoSync];
       nextId=txList.length?Math.max(...txList.map(t=>t.id))+1:1;
       saveToLocal();
     }
