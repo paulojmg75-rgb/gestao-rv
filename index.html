@@ -303,6 +303,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   <div class="nav-divider"></div>
   <div class="nav-item" data-page="configuracoes"><i class="ti ti-settings"></i> Configurações</div>
   <div class="topbar-actions">
+    <button class="btn btn-icon" onclick="syncLocalToCloud()" title="Enviar dados locais para a cloud (igualar PC e telemóvel)" style="color:var(--teal);border-color:var(--teal-l);background:var(--teal-l)"><i class="ti ti-cloud-up"></i></button>
     <button class="btn btn-icon" onclick="loadAllFromCloud()" title="Sincronizar agora" style="color:var(--blue);border-color:var(--blue-l);background:var(--blue-l)"><i class="ti ti-refresh"></i></button>
     <button class="btn btn-icon" onclick="exportarExcel()" title="Exportar Excel" style="color:var(--teal);border-color:var(--teal-l);background:var(--teal-l)"><i class="ti ti-download"></i></button>
     <label class="btn btn-icon" title="Importar Excel" style="cursor:pointer;color:var(--blue);border-color:var(--blue-l);background:var(--blue-l)"><i class="ti ti-upload"></i><input type="file" accept=".xlsx,.xls" onchange="importarExcel(event)" style="display:none"></label>
@@ -320,6 +321,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
     <div class="logo-sub" style="font-size:9px">Gestão de Simuladores</div>
   </div>
   <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+    <button class="btn btn-icon" onclick="syncLocalToCloud()" title="Enviar dados locais para a cloud" style="color:var(--teal);border-color:var(--teal-l);background:var(--teal-l);padding:7px 9px"><i class="ti ti-cloud-up"></i></button>
     <button class="btn btn-icon" onclick="loadAllFromCloud()" title="Sincronizar agora" style="color:var(--blue);border-color:var(--blue-l);background:var(--blue-l);padding:7px 9px"><i class="ti ti-refresh"></i></button>
     <button class="btn btn-icon" onclick="gdriveConnectInteractive()" title="Ligar Google Drive" style="color:var(--amber);border-color:var(--amber-l);background:var(--amber-l);padding:7px 9px"><i class="ti ti-brand-google-drive"></i></button>
   </div>
@@ -343,6 +345,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   <div class="mobile-more-item" data-page="relatorio"><i class="ti ti-chart-bar"></i><span>Relatório</span></div>
   <div class="mobile-more-item" data-page="comparar"><i class="ti ti-arrows-left-right"></i><span>Comparar</span></div>
   <div class="mobile-more-item" data-page="configuracoes"><i class="ti ti-settings"></i><span>Configurações</span></div>
+  <div class="drive-more-item" onclick="closeMobileMore();syncLocalToCloud()"><i class="ti ti-cloud-up"></i><span>Enviar dados locais → cloud</span></div>
   <div class="drive-more-item" onclick="closeMobileMore();gdriveConnectInteractive()"><i class="ti ti-brand-google-drive"></i><span>Ligar Google Drive</span></div>
   <div class="drive-more-item" onclick="closeMobileMore();loadAllFromCloud()"><i class="ti ti-refresh"></i><span>Sincronizar agora</span></div>
 </div>
@@ -1268,12 +1271,16 @@ function renderTxTable(){
     data=data.filter(t=>t.data>=ini&&t.data<=fim);
   }
   data.sort((a,b)=>b.data.localeCompare(a.data)||b.id-a.id);
+  // Numeração sequencial limpa (1,2,3…) por ordem cronológica de TODOS os lançamentos.
+  // Recontada a cada render, por isso não deixa "buracos" ao apagar. O ID real fica por dentro.
+  const _ord=txList.slice().sort((a,b)=>(a.data||'').localeCompare(b.data||'')||a.id-b.id);
+  const _num={}; _ord.forEach((t,i)=>{_num[t.id]=i+1;});
   const cnt=document.getElementById('tx-count');
   const saldo=data.reduce((s,t)=>s+(t.tipo==='Receita'?t.valor:-t.valor),0);
   if(cnt)cnt.textContent=data.length+' registos · Saldo: '+fmt(saldo);
   const meioIcon={Dinheiro:'💵',Cartão:'💳',MBWay:'📱','Transferência':'🏦',Cheque:'📄',Outro:'🔹'};
   document.getElementById('txBody').innerHTML=data.length?data.map(t=>`<tr>
-    <td style="color:var(--text3);font-size:10px">${t.id}</td>
+    <td style="color:var(--text3);font-size:10px" title="ID interno: ${t.id}">${_num[t.id]}</td>
     <td>${t.data}</td><td style="text-transform:capitalize">${t.mes}</td>
     <td>${t.cat}</td>
     <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.conta}">${t.conta}${t.notas?`<br><span style="font-size:10px;color:var(--text2)">${t.notas}</span>`:''}</td>
@@ -2428,6 +2435,45 @@ async function supaInsert(table,data){const d={...data};delete d.id;return supaF
 async function supaUpdate(table,id,data){const d={...data};delete d.id;return supaFetch(table,'PATCH',d,'id=eq.'+id);}
 async function supaDelete(table,id){return supaFetch(table,'DELETE',null,'id=eq.'+id);}
 
+/* Envia para a cloud os lançamentos e feiras/eventos que só existem neste dispositivo
+   (ex.: importados de Excel). Assim o PC e o telemóvel passam a ver o mesmo. */
+let enviandoLocais=false;
+async function syncLocalToCloud(){
+  if(enviandoLocais)return;
+  if(!confirm('Enviar para a cloud os lançamentos, feiras e eventos que ainda só existem neste dispositivo?\nAssim o telemóvel e o PC ficam iguais.'))return;
+  enviandoLocais=true;
+  showSyncStatus('A enviar dados locais para a cloud...',true);
+  try{
+    const txC=await supaFetch('lancamentos','GET',null,'select=id');
+    const fC=await supaFetch('feiras','GET',null,'select=id');
+    const txCloudIds=new Set((Array.isArray(txC)?txC:[]).map(r=>r.id));
+    const fCloudIds=new Set((Array.isArray(fC)?fC:[]).map(r=>r.id));
+    let nTx=0,nF=0;
+    for(const t of txList.filter(t=>!txCloudIds.has(t.id))){
+      const oldId=t.id;
+      try{
+        const r=await supaInsert('lancamentos',t);
+        if(r&&r[0]){
+          t.id=r[0].id;
+          const doc=loadDocLocal(oldId); if(doc){saveDocLocal(r[0].id,doc);deleteDocLocal(oldId);}
+          const did=loadDocDriveId(oldId); if(did){saveDocDriveId(r[0].id,did);deleteDocDriveId(oldId);}
+          nTx++;
+        }
+      }catch(e){console.error('Envio lançamento falhou',oldId,e);}
+    }
+    for(const f of fairs.filter(f=>!fCloudIds.has(f.id))){
+      try{ const r=await supaInsert('feiras',f); if(r&&r[0]){f.id=r[0].id;nF++;} }
+      catch(e){console.error('Envio feira falhou',f.id,e);}
+    }
+    saveToLocal();
+    renderTxTable();renderDashboard();populateFilters();renderCalendar();renderFairList();
+    showSyncStatus('✓ Enviados '+nTx+' lançamentos e '+nF+' feiras/eventos para a cloud',true);
+  }catch(e){
+    console.error('syncLocalToCloud',e);
+    showSyncStatus('Erro ao enviar dados locais',false);
+  }finally{ enviandoLocais=false; }
+}
+
 /* ---- PING ANTI-PAUSA ---- */
 async function pingSupabase(){
   try{
@@ -2482,7 +2528,12 @@ async function loadAllFromCloud(){
       nextId=txList.length?Math.max(...txList.map(t=>t.id))+1:1;
       saveToLocal();
     }
-    if(Array.isArray(fs)&&fs.length>0){fairs=fs;nextFairId=Math.max(...fairs.map(f=>f.id))+1;}
+    if(Array.isArray(fs)){
+      const fCloudIds=new Set(fs.map(f=>f.id));
+      const fLocais=fairs.filter(f=>!fCloudIds.has(f.id));
+      fairs=[...fs, ...fLocais];
+      if(fairs.length)nextFairId=Math.max(...fairs.map(f=>f.id))+1;
+    }
     if(Array.isArray(em)&&em.length>0){emps=em.map(e=>({...e,sal:parseFloat(e.sal)||0}));nextEmpId=Math.max(...emps.map(e=>e.id))+1;}
     if(Array.isArray(vi)&&vi.length>0){viats=vi;nextViatId=Math.max(...viats.map(v=>v.id))+1;}
 
