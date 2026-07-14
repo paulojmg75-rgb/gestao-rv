@@ -293,7 +293,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   <div class="nav-item active" data-page="dashboard"><i class="ti ti-layout-dashboard"></i> Dashboard</div>
   <div class="nav-item" data-page="lancamentos"><i class="ti ti-plus-circle"></i> Lançamentos</div>
   <div class="nav-divider"></div>
-  <div class="nav-item" data-page="feiras"><i class="ti ti-calendar-event"></i> Feiras</div>
+  <div class="nav-item" data-page="feiras"><i class="ti ti-calendar-event"></i> Feiras/Eventos</div>
   <div class="nav-item" data-page="empregados"><i class="ti ti-users"></i> Empregados</div>
   <div class="nav-item" data-page="viaturas"><i class="ti ti-car"></i> Viaturas</div>
   <div class="nav-divider"></div>
@@ -329,7 +329,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
 <nav class="mobile-nav">
   <div class="mobile-nav-item active" data-page="dashboard"><i class="ti ti-layout-dashboard"></i><span>Início</span></div>
   <div class="mobile-nav-item" data-page="lancamentos"><i class="ti ti-plus-circle"></i><span>Lançar</span></div>
-  <div class="mobile-nav-item" data-page="feiras"><i class="ti ti-calendar-event"></i><span>Feiras</span></div>
+  <div class="mobile-nav-item" data-page="feiras"><i class="ti ti-calendar-event"></i><span>Feiras/Ev.</span></div>
   <div class="mobile-nav-item" data-page="filtros"><i class="ti ti-filter"></i><span>Filtros</span></div>
   <div class="mobile-nav-item" id="mobileMoreBtn" onclick="toggleMobileMore()"><i class="ti ti-dots"></i><span>Mais</span></div>
 </nav>
@@ -2280,8 +2280,8 @@ function exportarExcel(){
   txList.forEach(t=>txRows.push([t.id,t.tipo,t.cat,t.conta,t.mes,t.ano,t.valor,t.data,t.notas||'',t.meio||'',t.empregado||'']));
   wb.SheetNames.push('Lancamentos');wb.Sheets['Lancamentos']=XLSX.utils.aoa_to_sheet(txRows);
   // Feiras
-  const fRows=[['ID','Nome','Início','Fim','Ano','Cor']];
-  fairs.forEach(f=>fRows.push([f.id,f.nome,f.inicio,f.fim,f.ano,f.cor]));
+  const fRows=[['ID','Nome','Início','Fim','Ano','Cor','Tipo']];
+  fairs.forEach(f=>fRows.push([f.id,f.nome,f.inicio,f.fim,f.ano,f.cor,f.tipo||'feira']));
   wb.SheetNames.push('Feiras');wb.Sheets['Feiras']=XLSX.utils.aoa_to_sheet(fRows);
   // Empregados
   const eRows=[['ID','Nome','Local','Salário/Dia','Cor','Observações','Feira']];
@@ -2352,7 +2352,7 @@ function importarExcel(e){
       if(wb.Sheets['Feiras']){
         const rows=XLSX.utils.sheet_to_json(wb.Sheets['Feiras']);
         if(rows.length){
-          fairs=rows.map(r=>({id:parseInt(r.ID)||nextFairId++,nome:r.Nome||'',inicio:r['Início']||r.Inicio||'',fim:r.Fim||'',ano:String(r.Ano||''),cor:r.Cor||'#BA7517'}));
+          fairs=rows.map(r=>({id:parseInt(r.ID)||nextFairId++,nome:r.Nome||'',inicio:r['Início']||r.Inicio||'',fim:r.Fim||'',ano:String(r.Ano||''),cor:r.Cor||'#BA7517',tipo:r.Tipo||'feira'}));
           if(fairs.length)nextFairId=Math.max(...fairs.map(f=>f.id))+1;
         }
       }
