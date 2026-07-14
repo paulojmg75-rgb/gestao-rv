@@ -411,8 +411,11 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
 <!-- FEIRAS -->
 <div class="page" id="page-feiras">
   <div class="page-header">
-    <div><h1>Calendário de Feiras</h1><p>Adiciona, edita ou remove feiras — as datas aparecem marcadas no calendário</p></div>
-    <button class="btn btn-blue" onclick="openFairModal()"><i class="ti ti-plus"></i> Nova feira</button>
+    <div><h1>Calendário de Feiras e Eventos</h1><p>Feiras (religiosas/recorrentes) e Eventos (organizados) — as datas aparecem no calendário</p></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-blue" onclick="openFairModal('feira')"><i class="ti ti-plus"></i> Nova feira</button>
+      <button class="btn" onclick="openEventoModal()" style="color:var(--blue);border-color:var(--blue-l);background:var(--blue-l)"><i class="ti ti-plus"></i> Novo evento</button>
+    </div>
   </div>
   <div class="grid2">
     <div class="card">
@@ -676,6 +679,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   <div class="tab-bar">
     <div class="tab active" onclick="showComparar('ano',this)">Por ano</div>
     <div class="tab" onclick="showComparar('feira',this)">Por feira</div>
+    <div class="tab" onclick="showComparar('evento',this)">Por evento</div>
   </div>
   <div id="compAno">
     <div class="card" style="padding:14px;margin-bottom:14px;display:flex;flex-wrap:wrap;align-items:center;gap:14px">
@@ -690,6 +694,12 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
       <div style="display:flex;align-items:center;gap:8px"><label style="font-size:12px;color:var(--text2)">Feira:</label><select id="compFeiraNome" onchange="renderCompararFeira()" style="padding:6px 10px;font-size:13px;border-radius:var(--radius);border:.5px solid var(--border2)"></select></div>
     </div>
     <div id="compFeiraResult"></div>
+  </div>
+  <div id="compEvento" style="display:none">
+    <div class="card" style="padding:14px;margin-bottom:14px;display:flex;flex-wrap:wrap;align-items:center;gap:14px">
+      <div style="display:flex;align-items:center;gap:8px"><label style="font-size:12px;color:var(--text2)">Evento / Local:</label><select id="compEventoNome" onchange="renderCompararEvento()" style="padding:6px 10px;font-size:13px;border-radius:var(--radius);border:.5px solid var(--border2)"></select></div>
+    </div>
+    <div id="compEventoResult"></div>
   </div>
 </div>
 
@@ -833,6 +843,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
 <div class="overlay" id="fairModal">
 <div class="modal" style="width:420px">
   <div class="modal-header"><h2 id="fairModalTitle">Nova feira</h2><button class="close-btn" onclick="closeFairModal()"><i class="ti ti-x"></i></button></div>
+  <div class="form-group"><label class="form-label">Tipo</label><select id="ff-tipo"><option value="feira">Feira (religiosa / recorrente)</option><option value="evento">Evento (organizado / diversão)</option></select></div>
   <div class="form-group"><label class="form-label">Nome / Local da feira</label><input type="text" id="ff-nome" placeholder="Ex: Barcelos — Feira das Cruzes"></div>
   <div class="form-row">
     <div class="form-group"><label class="form-label">Data de início</label><input type="date" id="ff-inicio"></div>
@@ -1183,7 +1194,7 @@ function renderDashboard(){
     <div class="metric"><div class="metric-label">Receita total</div><div class="metric-value">${fmt(rec)}</div><div class="metric-sub" style="color:var(--teal)">↑ ${filtered.filter(t=>t.tipo==='Receita').length} registos</div></div>
     <div class="metric"><div class="metric-label">Despesas totais</div><div class="metric-value">${fmt(desp)}</div><div class="metric-sub" style="color:var(--red)">↓ ${filtered.filter(t=>t.tipo==='Despesa').length} registos</div></div>
     <div class="metric"><div class="metric-label">Resultado líquido</div><div class="metric-value" style="color:${res>=0?'var(--teal)':'var(--red)'}">${fmt(res)}</div><div class="metric-sub" style="color:var(--text2)">Margem ${rec>0?Math.round(res/rec*100):0}%</div></div>
-    <div class="metric"><div class="metric-label">Feiras registadas</div><div class="metric-value">${fairs.filter(f=>anoSel==='Todos'||f.ano===String(anoSel)).length}</div><div class="metric-sub" style="color:var(--text2)">${[...new Set(filtered.map(t=>t.mes))].length} meses ativos</div></div>`;
+    <div class="metric"><div class="metric-label">Feiras / Eventos</div><div class="metric-value">${fairs.filter(f=>(anoSel==='Todos'||f.ano===String(anoSel))&&f.tipo!=='evento').length} / ${fairs.filter(f=>(anoSel==='Todos'||f.ano===String(anoSel))&&f.tipo==='evento').length}</div><div class="metric-sub" style="color:var(--text2)">feiras / eventos · ${[...new Set(filtered.map(t=>t.mes))].length} meses ativos</div></div>`;
   const recentEl=document.getElementById('recentTx');
   if(recentEl)recentEl.innerHTML=filtered.slice().sort((a,b)=>b.id-a.id).slice(0,6).map(t=>`<tr>
     <td>${t.data}</td><td style="max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.conta}</td>
@@ -1733,26 +1744,28 @@ function renderFairList(){
     const dias=Math.round((new Date(f.fim)-new Date(f.inicio))/864e5)+1;
     return`<div class="fair-item">
       <div class="fair-dot" style="background:${f.cor}"></div>
-      <div class="fair-info"><div class="fair-name">${f.nome}</div><div class="fair-dates">${f.inicio} → ${f.fim}</div></div>
+      <div class="fair-info"><div class="fair-name">${f.nome} <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:${f.tipo==='evento'?'var(--blue-l)':'var(--amber-l)'};color:${f.tipo==='evento'?'var(--blue)':'var(--amber)'}">${f.tipo==='evento'?'EVENTO':'FEIRA'}</span></div><div class="fair-dates">${f.inicio} → ${f.fim}</div></div>
       <span class="fair-days">${dias}d</span>
       <button class="btn btn-sm btn-icon btn-edit" onclick="editFair(${f.id})" title="Editar feira"><i class="ti ti-pencil" style="font-size:12px"></i></button>
       <button class="btn btn-sm btn-icon btn-del" onclick="deleteFair(${f.id})" title="Remover feira"><i class="ti ti-trash" style="font-size:12px"></i></button>
     </div>`;}).join(''):`<div class="empty"><i class="ti ti-calendar-off"></i>Sem feiras para ${yr}</div>`;
 }
-function openFairModal(){editFairId=null;document.getElementById('fairModalTitle').textContent='Nova feira';['ff-nome','ff-inicio','ff-fim'].forEach(id=>document.getElementById(id).value='');document.getElementById('ff-cor').value=nextFairColor();document.getElementById('ff-ano').value=String(new Date().getFullYear());document.getElementById('fairModal').style.display='flex';}
+function openFairModal(tipo){editFairId=null;const tp=tipo||'feira';document.getElementById('ff-tipo').value=tp;document.getElementById('fairModalTitle').textContent=tp==='evento'?'Novo evento':'Nova feira';['ff-nome','ff-inicio','ff-fim'].forEach(id=>document.getElementById(id).value='');document.getElementById('ff-cor').value=nextFairColor();document.getElementById('ff-ano').value=String(new Date().getFullYear());document.getElementById('fairModal').style.display='flex';}
+function openEventoModal(){openFairModal('evento');}
 function closeFairModal(){document.getElementById('fairModal').style.display='none';}
-function editFair(id){const f=fairs.find(x=>x.id===id);if(!f)return;editFairId=id;document.getElementById('fairModalTitle').textContent='Editar feira';document.getElementById('ff-nome').value=f.nome;document.getElementById('ff-inicio').value=f.inicio;document.getElementById('ff-fim').value=f.fim;document.getElementById('ff-ano').value=f.ano;document.getElementById('ff-cor').value=f.cor;document.getElementById('fairModal').style.display='flex';}
+function editFair(id){const f=fairs.find(x=>x.id===id);if(!f)return;editFairId=id;document.getElementById('ff-tipo').value=f.tipo||'feira';document.getElementById('fairModalTitle').textContent=(f.tipo==='evento'?'Editar evento':'Editar feira');document.getElementById('ff-nome').value=f.nome;document.getElementById('ff-inicio').value=f.inicio;document.getElementById('ff-fim').value=f.fim;document.getElementById('ff-ano').value=f.ano;document.getElementById('ff-cor').value=f.cor;document.getElementById('fairModal').style.display='flex';}
 function deleteFair(id){if(!confirm('Remover esta feira do calendário?'))return;fairs=fairs.filter(f=>f.id!==id);saveToLocal();supaDelete('feiras',id).then(()=>showSyncStatus('Feira removida!'));renderCalendar();renderFairList();renderDashboard();}
 function saveFair(){
   const nome=document.getElementById('ff-nome').value.trim(),inicio=document.getElementById('ff-inicio').value,fim=document.getElementById('ff-fim').value,ano=document.getElementById('ff-ano').value,cor=document.getElementById('ff-cor').value;
-  if(!nome||!inicio||!fim){alert('Preenche o nome e as datas da feira.');return;}
+  const tipo=document.getElementById('ff-tipo').value||'feira';
+  if(!nome||!inicio||!fim){alert('Preenche o nome e as datas.');return;}
   if(editFairId){
-    const i=fairs.findIndex(x=>x.id===editFairId);fairs[i]={...fairs[i],nome,inicio,fim,ano,cor};
-    saveToLocal();supaUpdate('feiras',editFairId,fairs[fairs.findIndex(x=>x.id===editFairId)]).then(()=>showSyncStatus('Feira atualizada!'));
+    const i=fairs.findIndex(x=>x.id===editFairId);fairs[i]={...fairs[i],nome,inicio,fim,ano,cor,tipo};
+    saveToLocal();supaUpdate('feiras',editFairId,fairs[fairs.findIndex(x=>x.id===editFairId)]).then(()=>showSyncStatus('Guardado!'));
   } else {
-    const nova={nome,inicio,fim,ano,cor};
+    const nova={nome,inicio,fim,ano,cor,tipo};
     const novaF={...nova,id:nextFairId++};fairs.push(novaF);
-    saveToLocal();supaInsert('feiras',nova).then(r=>{if(r&&r[0])fairs[fairs.length-1].id=r[0].id;showSyncStatus('Feira guardada!');});closeFairModal();renderCalendar();renderFairList();renderDashboard();return;
+    saveToLocal();supaInsert('feiras',nova).then(r=>{if(r&&r[0])fairs[fairs.length-1].id=r[0].id;showSyncStatus('Guardado!');});closeFairModal();renderCalendar();renderFairList();renderDashboard();return;
   }
   closeFairModal();renderCalendar();renderFairList();renderDashboard();afterSaveFair();
 }
@@ -2030,16 +2043,22 @@ function initComparar(){
     if(opts.length>=2){a.value=opts[opts.length-2];b.value=opts[opts.length-1];}
     else{a.value=opts[0];b.value=opts[0];}
   }
-  const nomes=[...new Set(fairs.map(f=>f.nome).filter(Boolean))].sort();
+  const nomes=[...new Set(fairs.filter(f=>f.tipo!=='evento').map(f=>f.nome).filter(Boolean))].sort();
   const fs=document.getElementById('compFeiraNome');
   if(fs)fs.innerHTML=nomes.length?nomes.map(n=>`<option>${n}</option>`).join(''):'<option value="">(sem feiras registadas)</option>';
+  // eventos = registos com tipo 'evento' (nomes distintos)
+  const nomesEv=[...new Set(fairs.filter(f=>f.tipo==='evento').map(f=>f.nome).filter(Boolean))].sort();
+  const es=document.getElementById('compEventoNome');
+  if(es)es.innerHTML=nomesEv.length?nomesEv.map(n=>`<option>${n}</option>`).join(''):'<option value="">(sem eventos registados)</option>';
   renderCompararAno();
   renderCompararFeira();
+  renderCompararEvento();
 }
 function showComparar(mode,el){
   document.querySelectorAll('#page-comparar .tab').forEach(x=>x.classList.remove('active'));el.classList.add('active');
   document.getElementById('compAno').style.display=mode==='ano'?'block':'none';
   document.getElementById('compFeira').style.display=mode==='feira'?'block':'none';
+  document.getElementById('compEvento').style.display=mode==='evento'?'block':'none';
 }
 function renderCompararAno(){
   const A=document.getElementById('compAnoA')?.value, B=document.getElementById('compAnoB')?.value;
@@ -2071,8 +2090,18 @@ function renderCompararFeira(){
   const nome=document.getElementById('compFeiraNome')?.value;
   const box=document.getElementById('compFeiraResult'); if(!box)return;
   if(!nome){box.innerHTML='<div class="empty" style="padding:20px"><i class="ti ti-calendar-off"></i>Sem feiras registadas para comparar</div>';return;}
-  const edicoes=fairs.filter(f=>f.nome===nome).slice().sort((a,b)=>(a.inicio||'').localeCompare(b.inicio||''));
-  if(!edicoes.length){box.innerHTML='';return;}
+  const edicoes=fairs.filter(f=>f.nome===nome&&f.tipo!=='evento').slice().sort((a,b)=>(a.inicio||'').localeCompare(b.inicio||''));
+  compararPorPeriodo(nome, edicoes, box);
+}
+function renderCompararEvento(){
+  const nome=document.getElementById('compEventoNome')?.value;
+  const box=document.getElementById('compEventoResult'); if(!box)return;
+  if(!nome){box.innerHTML='<div class="empty" style="padding:20px"><i class="ti ti-calendar-off"></i>Sem eventos registados para comparar</div>';return;}
+  const edicoes=fairs.filter(f=>f.nome===nome&&f.tipo==='evento').slice().sort((a,b)=>(a.inicio||'').localeCompare(b.inicio||''));
+  compararPorPeriodo(nome, edicoes, box);
+}
+function compararPorPeriodo(nome, edicoes, box){
+  if(!edicoes.length){box.innerHTML='<div class="empty" style="padding:20px"><i class="ti ti-calendar-off"></i>Só há uma edição (ou nenhuma) — nada para comparar</div>';return;}
   const dados=edicoes.map(f=>{
     const s=somaPeriodo(t=>(t.data||'')>=f.inicio && (t.data||'')<=f.fim);
     const rotulo=(f.ano||((f.inicio||'').slice(0,4)));
@@ -2086,7 +2115,7 @@ function renderCompararFeira(){
   box.innerHTML=`
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">${cards}</div>
     <div class="card" style="padding:0;overflow:hidden"><table><thead><tr>${head}</tr></thead><tbody>${rRec}${rDesp}${rSaldo}</tbody></table></div>
-    <div style="font-size:11px;color:var(--text3);margin-top:8px">Cada edição soma os lançamentos entre as datas de início e fim da feira.</div>`;
+    <div style="font-size:11px;color:var(--text3);margin-top:8px">Cada edição soma os lançamentos entre as datas de início e fim.</div>`;
 }
 
 /* ---- DOCUMENTOS ---- */
