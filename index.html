@@ -445,9 +445,9 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
     </div>
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.875rem">
-        <div class="card-title" style="margin-bottom:0"><i class="ti ti-list"></i> Feiras registadas</div>
+        <div class="card-title" style="margin-bottom:0"><i class="ti ti-list"></i> Feiras e Eventos registados</div>
         <select id="yearFilter" onchange="renderFairList()" style="width:auto;padding:5px 9px;font-size:11px">
-          <option>2024</option><option>2025</option><option>2026</option><option>2027</option><option>2028</option>
+          <option value="">Todos os anos</option><option>2024</option><option>2025</option><option>2026</option><option>2027</option><option>2028</option>
         </select>
       </div>
       <div id="fairList"></div>
@@ -501,26 +501,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
     <button class="btn btn-del" onclick="confirmarApagarTudo()" style="font-size:11px"><i class="ti ti-trash"></i> Apagar todos os dados</button>
   </div>
   <div style="display:flex;gap:.75rem;align-items:flex-start">
-    <!-- COLUNA 1: Feiras, Eventos -->
-    <div style="flex:1;display:flex;flex-direction:column;gap:.75rem">
-      <div class="card">
-        <div class="card-title" style="justify-content:space-between">
-          <span><i class="ti ti-calendar-event"></i> Feiras</span>
-          <button class="btn btn-sm" onclick="clearCfgList('feiras')" title="Apagar todas as feiras" style="color:var(--red);border-color:var(--red-l);background:var(--red-l)"><i class="ti ti-trash"></i></button>
-          <button class="btn btn-sm btn-primary" onclick="openFairModal()"><i class="ti ti-plus"></i> Nova</button>
-        </div>
-        <div id="cfg-feiras"></div>
-      </div>
-      <div class="card">
-        <div class="card-title" style="justify-content:space-between">
-          <span><i class="ti ti-map-pin"></i> Eventos</span>
-          <button class="btn btn-sm" onclick="clearCfgList('contas')" title="Apagar todos os eventos" style="color:var(--red);border-color:var(--red-l);background:var(--red-l)"><i class="ti ti-trash"></i></button>
-          <button class="btn btn-sm btn-primary" onclick="openCfgContaModal()"><i class="ti ti-plus"></i> Novo</button>
-        </div>
-        <div id="cfg-contas"></div>
-      </div>
-    </div>
-    <!-- COLUNA 2: Tipos de Receita, Empregados, Viaturas -->
+    <!-- COLUNA 1: Tipos de Receita -->
     <div style="flex:1;display:flex;flex-direction:column;gap:.75rem">
       <div class="card">
         <div class="card-title" style="justify-content:space-between">
@@ -530,6 +511,9 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
         </div>
         <div id="cfg-cats-rec"></div>
       </div>
+    </div>
+    <!-- COLUNA 2: Empregados + Viaturas -->
+    <div style="flex:1;display:flex;flex-direction:column;gap:.75rem">
       <div class="card">
         <div class="card-title" style="justify-content:space-between">
           <span><i class="ti ti-users"></i> Empregados</span>
@@ -547,7 +531,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
         <div id="cfg-viats"></div>
       </div>
     </div>
-    <!-- COLUNA 3: Categorias de Despesa -->
+    <!-- COLUNA 3: Categorias de Despesa (sozinha, é a maior) -->
     <div style="flex:1;display:flex;flex-direction:column;gap:.75rem">
       <div class="card">
         <div class="card-title" style="justify-content:space-between">
@@ -782,7 +766,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
     </select>
   </div>
   <div class="form-group">
-    <label class="form-label">Conta / Local <button class="link-btn" onclick="openContaModal()">+ Novo local</button></label>
+    <label class="form-label">Conta / Local <span style="font-weight:400;color:var(--text3);font-size:10px">(a feira/evento é o local)</span></label>
     <select id="f-conta"></select>
   </div>
   <div class="form-row">
@@ -1429,24 +1413,18 @@ function toggleViatField(){
 }
 function refreshContaSelect(sel){
   const s=document.getElementById('f-conta');
-  let html='';
-  // Feiras primeiro — agrupadas
+  let html='<option value="">— Sem feira/evento —</option>';
+  // A feira/evento É o local onde se gera a receita/despesa
   if(fairs.length){
-    html+='<optgroup label="🎪 Feiras">';
-    html+=fairs.sort((a,b)=>a.nome.localeCompare(b.nome)).map(f=>`<option value="${f.nome}"${sel&&f.nome===sel?' selected':''}>${f.nome}</option>`).join('');
+    html+='<optgroup label="🎪 Feiras / Eventos">';
+    html+=fairs.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(f=>`<option value="${f.nome}"${sel&&f.nome===sel?' selected':''}>${f.nome}</option>`).join('');
     html+='</optgroup>';
   }
-  // Locais/contas manuais
-  if(contas.length){
-    html+='<optgroup label="📍 Outros locais">';
-    html+=contas.map(c=>`<option${sel&&c===sel?' selected':''}>${c}</option>`).join('');
-    html+='</optgroup>';
+  // Mantém o valor de lançamentos antigos, mesmo que já não seja uma feira/evento
+  if(sel&&!fairs.find(f=>f.nome===sel)){
+    html+=`<optgroup label="Anterior"><option selected>${sel}</option></optgroup>`;
   }
-  // Se o valor seleccionado não está em nenhuma lista, adiciona-o
-  if(sel&&!fairs.find(f=>f.nome===sel)&&!contas.includes(sel)){
-    html+=`<option selected>${sel}</option>`;
-  }
-  s.innerHTML=html||'<option value="">— Seleciona local —</option>';
+  s.innerHTML=html;
 }
 function saveDocLocal(txId, doc){
   if(!doc)return;
@@ -1760,7 +1738,7 @@ function renderFairList(){
   // default to current year
   if(!sel.dataset.init){sel.value=String(new Date().getFullYear());sel.dataset.init='1';}
   const yr=sel.value;
-  const fl=fairs.filter(f=>f.ano===yr).sort((a,b)=>a.inicio.localeCompare(b.inicio));
+  const fl=fairs.filter(f=>!yr||f.ano===yr).sort((a,b)=>a.inicio.localeCompare(b.inicio));
   document.getElementById('fairList').innerHTML=fl.length?fl.map(f=>{
     const dias=Math.round((new Date(f.fim)-new Date(f.inicio))/864e5)+1;
     return`<div class="fair-item">
@@ -1769,7 +1747,7 @@ function renderFairList(){
       <span class="fair-days">${dias}d</span>
       <button class="btn btn-sm btn-icon btn-edit" onclick="editFair(${f.id})" title="Editar feira"><i class="ti ti-pencil" style="font-size:12px"></i></button>
       <button class="btn btn-sm btn-icon btn-del" onclick="deleteFair(${f.id})" title="Remover feira"><i class="ti ti-trash" style="font-size:12px"></i></button>
-    </div>`;}).join(''):`<div class="empty"><i class="ti ti-calendar-off"></i>Sem feiras para ${yr}</div>`;
+    </div>`;}).join(''):`<div class="empty"><i class="ti ti-calendar-off"></i>Sem feiras nem eventos${yr?' para '+yr:''}</div>`;
 }
 function openFairModal(tipo){editFairId=null;const tp=tipo||'feira';document.getElementById('ff-tipo').value=tp;document.getElementById('fairModalTitle').textContent=tp==='evento'?'Novo evento':'Nova feira';['ff-nome','ff-inicio','ff-fim'].forEach(id=>document.getElementById(id).value='');document.getElementById('ff-cor').value=nextFairColor();document.getElementById('ff-ano').value=String(new Date().getFullYear());document.getElementById('fairModal').style.display='flex';}
 function openEventoModal(){openFairModal('evento');}
@@ -2609,7 +2587,7 @@ function cfgDrop(e,el){
 function renderConfiguracoes(){
   // FEIRAS
   const fe=document.getElementById('cfg-feiras');
-  fe.innerHTML=fairs.length?fairs.map((f,i)=>`
+  if(fe)fe.innerHTML=fairs.length?fairs.map((f,i)=>`
     <div class="cfg-item" draggable="true" data-idx="${i}" data-grupo="feiras"
       ondragstart="cfgDragStart(event)" ondragover="cfgDragOver(event)" ondrop="cfgDrop(event,this)"
       style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:var(--bg);border-radius:var(--radius);margin-bottom:6px;border:.5px solid var(--border);cursor:grab">
@@ -2651,8 +2629,9 @@ function renderConfiguracoes(){
     catsDesp.map((c,i)=>cfgItem(c,`editCfgCat('despesa',${i})`,`deleteCfgCat('despesa',${i})`,i,'despesa')).join('')
     :`<div class="empty" style="padding:.875rem">Sem categorias</div>`;
 
-  // CONTAS
-  document.getElementById('cfg-contas').innerHTML=contas.length?
+  // CONTAS (removido da UI — lista de locais deixou de existir; feira/evento é o local)
+  const cfgContasEl=document.getElementById('cfg-contas');
+  if(cfgContasEl)cfgContasEl.innerHTML=contas.length?
     contas.map((c,i)=>cfgItem(c,`editCfgConta(${i})`,`deleteCfgConta(${i})`,i,'contas')).join('')
     :`<div class="empty" style="padding:.875rem">Sem locais</div>`;
 
@@ -2749,7 +2728,7 @@ function deleteCfgConta(idx){
 }
 /* Apaga TODA uma lista de Configurações (só essa; não toca nas outras) */
 function clearCfgList(tipo){
-  const label={feiras:'as feiras',contas:'os eventos/locais',emps:'os empregados',viats:'as viaturas',catsRec:'as categorias de receita',catsDesp:'as categorias de despesa'}[tipo];
+  const label={feiras:'as feiras',contas:'os locais',emps:'os empregados',viats:'as viaturas',catsRec:'as categorias de receita',catsDesp:'as categorias de despesa'}[tipo];
   if(!label)return;
   if(!confirm('Apagar TODAS '+label+'?\nEsta ação não pode ser desfeita — mas NÃO afeta as outras listas.'))return;
   if(tipo==='feiras'){ fairs.forEach(f=>supaDelete('feiras',f.id)); fairs=[]; }
