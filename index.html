@@ -54,6 +54,13 @@ body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;backgrou
 .nav-section{display:none}
 /* NAV — estilo "pill" moderno, em linha */
 .nav-item{display:flex;align-items:center;gap:5px;padding:6px 9px;margin:0;cursor:pointer;font-size:11.5px;color:var(--side-text);border-radius:9px;border:1px solid transparent;transition:all .18s cubic-bezier(.4,0,.2,1);position:relative;white-space:nowrap;flex-shrink:0;height:34px}
+.nav-dropdown{position:relative;flex-shrink:0}
+.nav-drop-toggle{display:flex;align-items:center;gap:5px;padding:6px 9px;cursor:pointer;font-size:11.5px;color:var(--side-text);border-radius:9px;border:1px solid transparent;white-space:nowrap;height:34px;transition:all .18s}
+.nav-drop-toggle:hover{background:var(--bg2)}
+.nav-dropdown.open .nav-drop-toggle{background:var(--bg2);border-color:var(--border2)}
+.nav-drop-menu{display:none;position:absolute;top:calc(100% + 4px);right:0;min-width:190px;background:var(--side);border:1px solid var(--side-line);border-radius:12px;box-shadow:0 10px 28px rgba(0,0,0,.18);padding:6px;z-index:200;flex-direction:column;gap:2px}
+.nav-dropdown.open .nav-drop-menu{display:flex}
+.nav-drop-menu .nav-item{width:100%;height:36px}
 .nav-item i{font-size:14px;width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:6px;transition:all .18s;flex-shrink:0}
 .nav-item:hover{background:rgba(28,25,23,.05);color:var(--ink)}
 .nav-item.active{background:transparent;color:var(--ink);font-weight:700;border:1px solid var(--bg2);box-shadow:0 1px 3px rgba(28,25,23,.06)}
@@ -227,7 +234,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   .sidebar{display:none}
   .mobile-header{display:flex}
   .mobile-nav{display:flex}
-  .main{padding-bottom:70px}
+  .main{padding-bottom:120px}
   .page{padding:.75rem}
   .metrics{grid-template-columns:repeat(2,1fr)}
   .metrics-3{grid-template-columns:repeat(2,1fr)}
@@ -290,18 +297,22 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   <input type="file" id="logoInput" accept="image/*" onchange="uploadLogo(event)">
 
   <span class="nav-section">Principal</span>
-  <div class="nav-item active" data-page="dashboard"><i class="ti ti-layout-dashboard"></i> Dashboard</div>
-  <div class="nav-item" data-page="lancamentos"><i class="ti ti-plus-circle"></i> Lançamentos</div>
+  <div class="nav-item active" data-page="dashboard"><i class="ti ti-layout-dashboard" style="color:var(--amber)"></i> Dashboard</div>
+  <div class="nav-item" data-page="lancamentos"><i class="ti ti-plus-circle" style="color:var(--teal)"></i> Lançamentos</div>
   <div class="nav-divider"></div>
-  <div class="nav-item" data-page="feiras"><i class="ti ti-calendar-event"></i> Feiras/Eventos</div>
-  <div class="nav-item" data-page="empregados"><i class="ti ti-users"></i> Empregados</div>
-  <div class="nav-item" data-page="viaturas"><i class="ti ti-car"></i> Viaturas</div>
+  <div class="nav-item" data-page="feiras"><i class="ti ti-calendar-event" style="color:var(--blue)"></i> Feiras/Eventos</div>
+  <div class="nav-item" data-page="empregados"><i class="ti ti-users" style="color:var(--red)"></i> Empregados</div>
+  <div class="nav-item" data-page="viaturas"><i class="ti ti-car" style="color:var(--blue)"></i> Viaturas</div>
   <div class="nav-divider"></div>
-  <div class="nav-item" data-page="filtros"><i class="ti ti-filter"></i> Filtros</div>
-  <div class="nav-item" data-page="relatorio"><i class="ti ti-chart-bar"></i> Relatório</div>
-  <div class="nav-item" data-page="comparar"><i class="ti ti-arrows-left-right"></i> Comparar</div>
-  <div class="nav-divider"></div>
-  <div class="nav-item" data-page="configuracoes"><i class="ti ti-settings"></i> Configurações</div>
+  <div class="nav-dropdown">
+    <div class="nav-drop-toggle" onclick="toggleNavDrop(event)"><i class="ti ti-adjustments" style="color:var(--amber)"></i> Mais <i class="ti ti-chevron-down" style="font-size:10px"></i></div>
+    <div class="nav-drop-menu" id="navDropAnalise">
+      <div class="nav-item" data-page="filtros"><i class="ti ti-filter" style="color:var(--blue)"></i> Filtros</div>
+      <div class="nav-item" data-page="relatorio"><i class="ti ti-chart-bar" style="color:var(--teal)"></i> Relatório</div>
+      <div class="nav-item" data-page="comparar"><i class="ti ti-arrows-left-right" style="color:var(--amber)"></i> Comparar</div>
+      <div class="nav-item" data-page="configuracoes"><i class="ti ti-settings" style="color:var(--red)"></i> Configurações</div>
+    </div>
+  </div>
   <div class="topbar-actions">
     <button class="btn btn-icon" onclick="syncLocalToCloud()" title="Enviar dados locais para a cloud (igualar PC e telemóvel)" style="color:var(--teal);border-color:var(--teal-l);background:var(--teal-l)"><i class="ti ti-cloud-up"></i></button>
     <button class="btn btn-icon" onclick="loadAllFromCloud()" title="Sincronizar agora" style="color:var(--blue);border-color:var(--blue-l);background:var(--blue-l)"><i class="ti ti-refresh"></i></button>
@@ -1138,7 +1149,10 @@ let viats=[];
 let nextViatId=1; let editViatId=null;
 
 /* ---- NAV ---- */
+function toggleNavDrop(e){e.stopPropagation();const d=e.currentTarget.closest('.nav-dropdown');if(d)d.classList.toggle('open');}
+document.addEventListener('click',(e)=>{if(!e.target.closest('.nav-dropdown'))document.querySelectorAll('.nav-dropdown.open').forEach(d=>d.classList.remove('open'));});
 function navTo(p){
+  document.querySelectorAll('.nav-dropdown.open').forEach(d=>d.classList.remove('open'));
   document.querySelectorAll('.nav-item,.mobile-nav-item,.mobile-more-item').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll(`[data-page="${p}"]`).forEach(x=>x.classList.add('active'));
