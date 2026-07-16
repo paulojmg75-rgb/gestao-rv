@@ -1211,7 +1211,7 @@ function renderDashboard(){
     <td><span class="pill ${t.tipo==='Receita'?'p-rec':'p-desp'}">${t.tipo}</span></td>
     <td style="text-align:right;font-weight:600;color:${t.tipo==='Receita'?'var(--teal)':'var(--red)'}">${fmt(t.valor)}</td></tr>`).join('');
   const localBarsEl=document.getElementById('localBars');
-  if(localBarsEl)localBarsEl.innerHTML=tL.length?tL.map(([l,v],i)=>`<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;gap:8px;font-size:10.5px;margin-bottom:2px"><span style="color:var(--text);font-weight:500">${l}</span><span style="color:var(--text2);white-space:nowrap">${fmt(v)}</span></div><div class="bar-wrap" style="height:9px"><div class="bar-fill" style="width:${Math.round(v/maxL*100)}%;background:${COLS[i]}">&nbsp;</div></div></div>`).join(''):`<div class="empty" style="padding:1rem">Sem receitas para ${anoSel}</div>`;
+  if(localBarsEl)localBarsEl.innerHTML=tL.length?tL.map(([l,v],i)=>`<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;gap:8px;font-size:10.5px;margin-bottom:2px"><span style="color:var(--text);font-weight:500">${l}</span><span style="color:var(--text2);white-space:nowrap">${fmt(v)}</span></div><div class="bar-wrap" style="height:9px"><div class="bar-fill" style="width:${Math.round(v/maxL*100)}%;background:${COLS[i%COLS.length]}">&nbsp;</div></div></div>`).join(''):`<div class="empty" style="padding:1rem">Sem receitas para ${anoSel}</div>`;
   const mD=Array(12).fill(null).map(()=>({r:0,d:0}));
   filtered.forEach(t=>{const m=MN[t.mes];if(m!==undefined){if(t.tipo==='Receita')mD[m].r+=t.valor;else mD[m].d+=t.valor;}});
   const aM=mD.map((m,i)=>({...m,i})).filter(m=>m.r>0||m.d>0);
