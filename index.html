@@ -1200,13 +1200,16 @@ function renderDashboard(){
     <div class="metric"><div class="metric-label">Receita total</div><div class="metric-value">${fmt(rec)}</div><div class="metric-sub" style="color:var(--teal)">↑ ${filtered.filter(t=>t.tipo==='Receita').length} registos</div></div>
     <div class="metric"><div class="metric-label">Despesas totais</div><div class="metric-value">${fmt(desp)}</div><div class="metric-sub" style="color:var(--red)">↓ ${filtered.filter(t=>t.tipo==='Despesa').length} registos</div></div>
     <div class="metric"><div class="metric-label">Feiras / Eventos</div><div class="metric-value">${fairs.filter(f=>(anoSel==='Todos'||f.ano===String(anoSel))&&f.tipo!=='evento').length} / ${fairs.filter(f=>(anoSel==='Todos'||f.ano===String(anoSel))&&f.tipo==='evento').length}</div><div class="metric-sub" style="color:var(--text2)">feiras / eventos · ${[...new Set(filtered.map(t=>t.mes))].length} meses ativos</div></div>`;
+  // Receita por local — TODAS as feiras/locais (sem limite)
+  const lM={};filtered.filter(t=>t.tipo==='Receita').forEach(t=>{const c=(t.conta||'').replace(/-SIMULADOR|-Máq\. Machado/,'');if(!c)return;lM[c]=(lM[c]||0)+t.valor;});
+  const tL=Object.entries(lM).sort((a,b)=>b[1]-a[1]),maxL=Math.max(...tL.map(x=>x[1]),1);
+  // Últimos lançamentos — a quantidade acompanha o nº de locais, para as duas colunas ficarem equilibradas
+  const nRecent=Math.max(6, tL.length);
   const recentEl=document.getElementById('recentTx');
-  if(recentEl)recentEl.innerHTML=filtered.slice().sort((a,b)=>b.id-a.id).slice(0,6).map(t=>`<tr>
-    <td>${t.data}</td><td style="max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.conta}</td>
+  if(recentEl)recentEl.innerHTML=filtered.slice().sort((a,b)=>b.id-a.id).slice(0,nRecent).map(t=>`<tr>
+    <td>${t.data}</td><td style="max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.conta||'—'}</td>
     <td><span class="pill ${t.tipo==='Receita'?'p-rec':'p-desp'}">${t.tipo}</span></td>
     <td style="text-align:right;font-weight:600;color:${t.tipo==='Receita'?'var(--teal)':'var(--red)'}">${fmt(t.valor)}</td></tr>`).join('');
-  const lM={};filtered.filter(t=>t.tipo==='Receita').forEach(t=>{const k=t.conta.replace(/-SIMULADOR|-Máq\. Machado/,'');lM[k]=(lM[k]||0)+t.valor;});
-  const tL=Object.entries(lM).sort((a,b)=>b[1]-a[1]).slice(0,6),maxL=Math.max(...tL.map(x=>x[1]),1);
   const localBarsEl=document.getElementById('localBars');
   if(localBarsEl)localBarsEl.innerHTML=tL.length?tL.map(([l,v],i)=>`<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;gap:8px;font-size:10.5px;margin-bottom:2px"><span style="color:var(--text);font-weight:500">${l}</span><span style="color:var(--text2);white-space:nowrap">${fmt(v)}</span></div><div class="bar-wrap" style="height:9px"><div class="bar-fill" style="width:${Math.round(v/maxL*100)}%;background:${COLS[i]}">&nbsp;</div></div></div>`).join(''):`<div class="empty" style="padding:1rem">Sem receitas para ${anoSel}</div>`;
   const mD=Array(12).fill(null).map(()=>({r:0,d:0}));
