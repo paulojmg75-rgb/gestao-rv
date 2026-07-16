@@ -162,7 +162,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
 .cal-d.fair-day{font-weight:600}
 .fdot{width:3px;height:3px;border-radius:50%;position:absolute;bottom:1px;left:50%;transform:translateX(-50%)}
 /* Mapa anual de feiras */
-.ycal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px}
+.ycal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .ycal-month{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:8px}
 .ycal-mtitle{font-size:11px;font-weight:700;text-align:center;margin-bottom:5px;color:var(--text)}
 .ycal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:1px}
@@ -432,38 +432,42 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
     </div>
   </div>
   <div class="grid2">
+    <!-- COLUNA ESQUERDA: Mapa anual (3 meses por linha) -->
     <div class="card">
       <div class="cal-header">
-        <button class="btn btn-sm" onclick="prevMonth()"><i class="ti ti-chevron-left"></i></button>
-        <span style="font-size:14px;font-weight:600" id="calTitle"></span>
-        <button class="btn btn-sm" onclick="nextMonth()"><i class="ti ti-chevron-right"></i></button>
+        <button class="btn btn-sm" onclick="prevYearAnnual()" title="Ano anterior"><i class="ti ti-chevron-left"></i></button>
+        <span style="font-size:14px;font-weight:600" id="ycalTitle"></span>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-sm" onclick="nextYearAnnual()" title="Ano seguinte"><i class="ti ti-chevron-right"></i></button>
+          <button class="btn btn-sm" onclick="printAnnualCalendar()" title="Imprimir calendário"><i class="ti ti-printer"></i> Imprimir</button>
+        </div>
       </div>
-      <div class="cal-grid" id="calGrid"></div>
-      <div style="margin-top:.875rem;font-size:10px;color:var(--text2);display:flex;align-items:center;gap:6px">
-        <span style="width:12px;height:12px;border-radius:3px;background:var(--amber-l);border:.5px solid var(--amber);display:inline-block"></span> Dias de feira ativa
+      <div class="ycal-grid" id="ycalGrid"></div>
+      <div id="ycalLegend" style="margin-top:.875rem;display:flex;flex-wrap:wrap;gap:6px"></div>
+    </div>
+    <!-- COLUNA DIREITA: calendário mensal (cima) + lista de feiras (baixo) -->
+    <div style="display:flex;flex-direction:column;gap:.875rem">
+      <div class="card">
+        <div class="cal-header">
+          <button class="btn btn-sm" onclick="prevMonth()"><i class="ti ti-chevron-left"></i></button>
+          <span style="font-size:14px;font-weight:600" id="calTitle"></span>
+          <button class="btn btn-sm" onclick="nextMonth()"><i class="ti ti-chevron-right"></i></button>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+        <div style="margin-top:.875rem;font-size:10px;color:var(--text2);display:flex;align-items:center;gap:6px">
+          <span style="width:12px;height:12px;border-radius:3px;background:var(--amber-l);border:.5px solid var(--amber);display:inline-block"></span> Dias de feira ativa
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.875rem">
+          <div class="card-title" style="margin-bottom:0"><i class="ti ti-list"></i> Feiras e Eventos registados</div>
+          <select id="yearFilter" onchange="renderFairList()" style="width:auto;padding:5px 9px;font-size:11px">
+            <option value="">Todos os anos</option><option>2024</option><option>2025</option><option>2026</option><option>2027</option><option>2028</option>
+          </select>
+        </div>
+        <div id="fairList"></div>
       </div>
     </div>
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.875rem">
-        <div class="card-title" style="margin-bottom:0"><i class="ti ti-list"></i> Feiras e Eventos registados</div>
-        <select id="yearFilter" onchange="renderFairList()" style="width:auto;padding:5px 9px;font-size:11px">
-          <option value="">Todos os anos</option><option>2024</option><option>2025</option><option>2026</option><option>2027</option><option>2028</option>
-        </select>
-      </div>
-      <div id="fairList"></div>
-    </div>
-  </div>
-  <div class="card" style="margin-top:1rem">
-    <div class="cal-header">
-      <button class="btn btn-sm" onclick="prevYearAnnual()" title="Ano anterior"><i class="ti ti-chevron-left"></i></button>
-      <span style="font-size:14px;font-weight:600" id="ycalTitle"></span>
-      <div style="display:flex;gap:6px">
-        <button class="btn btn-sm" onclick="nextYearAnnual()" title="Ano seguinte"><i class="ti ti-chevron-right"></i></button>
-        <button class="btn btn-sm" onclick="printAnnualCalendar()" title="Imprimir calendário"><i class="ti ti-printer"></i> Imprimir</button>
-      </div>
-    </div>
-    <div class="ycal-grid" id="ycalGrid"></div>
-    <div id="ycalLegend" style="margin-top:.875rem;display:flex;flex-wrap:wrap;gap:6px"></div>
   </div>
 </div>
 
