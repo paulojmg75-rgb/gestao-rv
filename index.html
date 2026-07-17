@@ -1752,6 +1752,7 @@ function renderFairList(){
       <div class="fair-dot" style="background:${f.cor}"></div>
       <div class="fair-info"><div class="fair-name">${f.nome} <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:${f.tipo==='evento'?'var(--blue-l)':'var(--amber-l)'};color:${f.tipo==='evento'?'var(--blue)':'var(--amber)'}">${f.tipo==='evento'?'EVENTO':'FEIRA'}</span></div><div class="fair-dates">${f.inicio} → ${f.fim}</div></div>
       <span class="fair-days">${dias}d</span>
+      <button class="btn btn-sm btn-icon" onclick="duplicateFair(${f.id})" title="Repetir no ano seguinte" style="color:var(--teal);background:var(--teal-l);border-color:var(--teal-l)"><i class="ti ti-copy" style="font-size:12px"></i></button>
       <button class="btn btn-sm btn-icon btn-edit" onclick="editFair(${f.id})" title="Editar feira"><i class="ti ti-pencil" style="font-size:12px"></i></button>
       <button class="btn btn-sm btn-icon btn-del" onclick="deleteFair(${f.id})" title="Remover feira"><i class="ti ti-trash" style="font-size:12px"></i></button>
     </div>`;}).join(''):`<div class="empty"><i class="ti ti-calendar-off"></i>Sem feiras nem eventos${yr?' para '+yr:''}</div>`;
@@ -1760,6 +1761,23 @@ function openFairModal(tipo){editFairId=null;const tp=tipo||'feira';document.get
 function openEventoModal(){openFairModal('evento');}
 function closeFairModal(){document.getElementById('fairModal').style.display='none';}
 function editFair(id){const f=fairs.find(x=>x.id===id);if(!f)return;editFairId=id;document.getElementById('ff-tipo').value=f.tipo||'feira';document.getElementById('fairModalTitle').textContent=(f.tipo==='evento'?'Editar evento':'Editar feira');document.getElementById('ff-nome').value=f.nome;document.getElementById('ff-inicio').value=f.inicio;document.getElementById('ff-fim').value=f.fim;document.getElementById('ff-ano').value=f.ano;document.getElementById('ff-cor').value=f.cor;document.getElementById('fairModal').style.display='flex';}
+/* Troca só o ano numa data YYYY-MM-DD (mantém mês e dia) */
+function bumpYear(dateStr, novoAno){ if(!dateStr||dateStr.length<10)return ''; return novoAno+dateStr.slice(4); }
+/* Repetir uma feira/evento no ano seguinte: mesmo nome/tipo/cor, ano+1, datas sugeridas (ajustáveis).
+   Cria um NOVO registo (editFairId=null) — não altera o original. */
+function duplicateFair(id){
+  const f=fairs.find(x=>x.id===id);if(!f)return;
+  editFairId=null;
+  const anoSeg=String((parseInt(f.ano)|| (new Date().getFullYear()))+1);
+  document.getElementById('ff-tipo').value=f.tipo||'feira';
+  document.getElementById('fairModalTitle').textContent=(f.tipo==='evento'?'Repetir evento':'Repetir feira')+' — '+anoSeg;
+  document.getElementById('ff-nome').value=f.nome;
+  document.getElementById('ff-cor').value=f.cor;
+  document.getElementById('ff-ano').value=anoSeg;
+  document.getElementById('ff-inicio').value=bumpYear(f.inicio,anoSeg);
+  document.getElementById('ff-fim').value=bumpYear(f.fim,anoSeg);
+  document.getElementById('fairModal').style.display='flex';
+}
 function deleteFair(id){if(!confirm('Remover esta feira do calendário?'))return;fairs=fairs.filter(f=>f.id!==id);saveToLocal();supaDelete('feiras',id).then(()=>showSyncStatus('Feira removida!'));renderCalendar();renderFairList();renderDashboard();}
 function saveFair(){
   const nome=document.getElementById('ff-nome').value.trim(),inicio=document.getElementById('ff-inicio').value,fim=document.getElementById('ff-fim').value,ano=document.getElementById('ff-ano').value,cor=document.getElementById('ff-cor').value;
