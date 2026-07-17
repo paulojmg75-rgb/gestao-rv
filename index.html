@@ -720,14 +720,14 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   <div class="edit-banner" id="editBanner" style="display:none"><i class="ti ti-pencil"></i> Estás a editar um lançamento existente. Corrige o que precisas e guarda.</div>
   <div class="form-row">
     <div class="form-group"><label class="form-label">Tipo</label><select id="f-tipo" onchange="refreshCatSelect()"><option value="Despesa">Despesa</option><option value="Receita">Receita</option></select></div>
-    <div class="form-group"><label class="form-label">Data</label><input type="date" id="f-data"></div>
+    <div class="form-group"><label class="form-label">Data</label><input type="date" id="f-data" onchange="refreshContaSelect(document.getElementById('f-conta').value)"></div>
   </div>
   <div class="form-row">
     <div class="form-group"><label class="form-label">Mês</label>
       <select id="f-mes"><option>janeiro</option><option>fevereiro</option><option>março</option><option>abril</option><option>maio</option><option>junho</option><option>julho</option><option>agosto</option><option>setembro</option><option>outubro</option><option>novembro</option><option>dezembro</option></select>
     </div>
     <div class="form-group"><label class="form-label">Ano</label>
-      <select id="f-ano"><option>2024</option><option>2025</option><option>2026</option><option>2027</option></select>
+      <select id="f-ano" onchange="refreshContaSelect(document.getElementById('f-conta').value)"><option>2024</option><option>2025</option><option>2026</option><option>2027</option></select>
     </div>
   </div>
   <div class="form-group"><label class="form-label">Valor total (€)</label><input type="number" id="f-valor" placeholder="0.00" step="0.01" min="0" oninput="updateSplitPreview()"></div>
@@ -1420,15 +1420,22 @@ function toggleViatField(){
 }
 function refreshContaSelect(sel){
   const s=document.getElementById('f-conta');
+  // Ano do lançamento: primeiro pela data, senão pelo campo Ano
+  const ano=((document.getElementById('f-data')?.value||'').slice(0,4))||(document.getElementById('f-ano')?.value)||'';
   let html='<option value="">— Sem feira/evento —</option>';
-  // A feira/evento É o local onde se gera a receita/despesa
-  if(fairs.length){
-    html+='<optgroup label="🎪 Feiras / Eventos">';
-    html+=fairs.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(f=>`<option value="${f.nome}"${sel&&f.nome===sel?' selected':''}>${f.nome}</option>`).join('');
+  // Só as feiras/eventos DESTE ano, e cada nome uma só vez
+  const vistos=new Set();
+  const lista=fairs
+    .filter(f=>f.nome && (!ano||String(f.ano)===String(ano)))
+    .filter(f=>{ if(vistos.has(f.nome))return false; vistos.add(f.nome); return true; })
+    .sort((a,b)=>a.nome.localeCompare(b.nome));
+  if(lista.length){
+    html+='<optgroup label="🎪 Feiras / Eventos de '+ano+'">';
+    html+=lista.map(f=>`<option value="${f.nome}"${sel&&f.nome===sel?' selected':''}>${f.nome}</option>`).join('');
     html+='</optgroup>';
   }
-  // Mantém o valor de lançamentos antigos, mesmo que já não seja uma feira/evento
-  if(sel&&!fairs.find(f=>f.nome===sel)){
+  // Mantém o valor de um lançamento antigo, mesmo que não seja deste ano
+  if(sel&&!lista.find(f=>f.nome===sel)){
     html+=`<optgroup label="Anterior"><option selected>${sel}</option></optgroup>`;
   }
   s.innerHTML=html;
