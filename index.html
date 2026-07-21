@@ -590,53 +590,35 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
 
 <!-- FILTROS -->
 <div class="page" id="page-filtros">
-  <div class="page-header"><div><h1>Filtros & Análise</h1><p>Consulta os teus dados por qualquer critério</p></div><button class="btn btn-purple" onclick="aplicarFiltros()"><i class="ti ti-search"></i> Aplicar</button></div>
+  <div class="page-header"><div><h1>Filtros</h1><p>Consulta os teus lançamentos por qualquer critério</p></div><button class="btn btn-sm" onclick="limparFiltros()"><i class="ti ti-x"></i> Limpar</button></div>
 
-  <div class="filter-section">
-    <div class="filter-section-title"><i class="ti ti-calendar"></i> Período</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+  <div class="card" style="padding:1rem;margin-bottom:1rem">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
       <button class="btn btn-sm" onclick="setFiltroRapido('semana',this)">Esta semana</button>
       <button class="btn btn-sm" onclick="setFiltroRapido('mes',this)">Este mês</button>
       <button class="btn btn-sm" onclick="setFiltroRapido('ano',this)">Este ano</button>
       <button class="btn btn-sm" onclick="setFiltroRapido('tudo',this)">Tudo</button>
     </div>
-    <div class="filter-grid">
-      <div class="form-group"><label class="form-label">Data início</label><input type="date" id="fi-inicio"></div>
-      <div class="form-group"><label class="form-label">Data fim</label><input type="date" id="fi-fim"></div>
-      <div class="form-group"><label class="form-label">Ano</label>
-        <select id="fi-ano"><option value="">Todos os anos</option><option>2024</option><option>2025</option><option>2026</option><option>2027</option></select>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
+      <div class="form-group" style="margin:0"><label class="form-label">Feira / Evento</label>
+        <select id="fi-conta" onchange="aplicarFiltros()"><option value="">Todas</option></select>
       </div>
+      <div class="form-group" style="margin:0"><label class="form-label">Tipo</label>
+        <select id="fi-tipo" onchange="aplicarFiltros()"><option value="">Receitas e Despesas</option><option value="Receita">Receitas</option><option value="Despesa">Despesas</option></select>
+      </div>
+      <div class="form-group" style="margin:0"><label class="form-label">Categoria</label>
+        <select id="fi-cat" onchange="aplicarFiltros()"><option value="">Todas</option></select>
+      </div>
+      <div class="form-group" style="margin:0"><label class="form-label">Empregado</label>
+        <select id="fi-emp" onchange="aplicarFiltros()"><option value="">Todos</option></select>
+      </div>
+      <div class="form-group" style="margin:0"><label class="form-label">De</label><input type="date" id="fi-inicio" onchange="aplicarFiltros()"></div>
+      <div class="form-group" style="margin:0"><label class="form-label">Até</label><input type="date" id="fi-fim" onchange="aplicarFiltros()"></div>
     </div>
-  </div>
-
-  <div class="filter-section">
-    <div class="filter-section-title"><i class="ti ti-tag"></i> Tipo & Categoria</div>
-    <div class="filter-grid">
-      <div class="form-group"><label class="form-label">Tipo</label>
-        <select id="fi-tipo"><option value="">Receitas e Despesas</option><option value="Receita">Receitas</option><option value="Despesa">Despesas</option></select>
-      </div>
-      <div class="form-group"><label class="form-label">Categoria</label>
-        <select id="fi-cat"><option value="">Todas</option></select>
-      </div>
-      <div class="form-group"><label class="form-label">Meio de pagamento</label>
-        <select id="fi-meio"><option value="">Todos</option><option>Dinheiro</option><option>Cartão</option><option>MBWay</option><option>Transferência</option><option>Cheque</option></select>
-      </div>
-    </div>
-  </div>
-
-  <div class="filter-section">
-    <div class="filter-section-title"><i class="ti ti-calendar-event"></i> Feira & Empregado</div>
-    <div class="filter-grid">
-      <div class="form-group"><label class="form-label">Feira</label>
-        <select id="fi-feira"><option value="">Todas as feiras</option></select>
-      </div>
-      <div class="form-group"><label class="form-label">Empregado</label>
-        <select id="fi-emp"><option value="">Todos os empregados</option></select>
-      </div>
-      <div class="form-group"><label class="form-label">Local / Conta</label>
-        <select id="fi-conta"><option value="">Todos os locais</option></select>
-      </div>
-    </div>
+    <!-- campos mantidos para compatibilidade da função de filtrar -->
+    <select id="fi-ano" style="display:none"><option value=""></option></select>
+    <select id="fi-meio" style="display:none"><option value=""></option></select>
+    <select id="fi-feira" style="display:none"><option value=""></option></select>
   </div>
 
   <!-- RESULTADOS -->
@@ -679,11 +661,33 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
     <div><h1>Comparar</h1><p>Compara o movimento financeiro entre anos ou entre edições da mesma feira</p></div>
   </div>
   <div class="tab-bar">
-    <div class="tab active" onclick="showComparar('ano',this)">Por ano</div>
+    <div class="tab active" onclick="showComparar('duo',this)">Lado a lado</div>
+    <div class="tab" onclick="showComparar('ano',this)">Por ano</div>
     <div class="tab" onclick="showComparar('feira',this)">Por feira</div>
     <div class="tab" onclick="showComparar('evento',this)">Por evento</div>
   </div>
-  <div id="compAno">
+  <div id="compDuo">
+    <div class="grid2">
+      <div class="card" style="padding:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--blue);margin-bottom:8px">COLUNA A</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <select id="duoAnoA" onchange="renderCompararDuo()" style="flex:1;min-width:90px;padding:6px 10px;font-size:13px;border-radius:var(--radius);border:.5px solid var(--border2)"></select>
+          <select id="duoFeiraA" onchange="renderCompararDuo()" style="flex:2;min-width:140px;padding:6px 10px;font-size:13px;border-radius:var(--radius);border:.5px solid var(--border2)"></select>
+        </div>
+        <div id="duoResultA" style="margin-top:12px"></div>
+      </div>
+      <div class="card" style="padding:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--teal);margin-bottom:8px">COLUNA B</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <select id="duoAnoB" onchange="renderCompararDuo()" style="flex:1;min-width:90px;padding:6px 10px;font-size:13px;border-radius:var(--radius);border:.5px solid var(--border2)"></select>
+          <select id="duoFeiraB" onchange="renderCompararDuo()" style="flex:2;min-width:140px;padding:6px 10px;font-size:13px;border-radius:var(--radius);border:.5px solid var(--border2)"></select>
+        </div>
+        <div id="duoResultB" style="margin-top:12px"></div>
+      </div>
+    </div>
+    <div id="duoResumo" style="margin-top:14px"></div>
+  </div>
+  <div id="compAno" style="display:none">
     <div class="card" style="padding:14px;margin-bottom:14px;display:flex;flex-wrap:wrap;align-items:center;gap:14px">
       <div style="display:flex;align-items:center;gap:8px"><label style="font-size:12px;color:var(--text2)">Ano A:</label><select id="compAnoA" onchange="renderCompararAno()" style="padding:6px 10px;font-size:13px;border-radius:var(--radius);border:.5px solid var(--border2)"></select></div>
       <div style="font-weight:700;color:var(--text2)">vs</div>
@@ -1152,7 +1156,7 @@ function navTo(p){
   if(p==='viaturas'){renderViats();renderCombust();}
   if(p==='relatorio'){renderReport('mensal');}
   if(p==='comparar'){initComparar();}
-  if(p==='filtros'){initFiltros();}
+  if(p==='filtros'){initFiltros();aplicarFiltros();}
   if(p==='configuracoes'){renderConfiguracoes();}
   closeMobileMore();
   window.scrollTo(0,0);
@@ -2084,9 +2088,77 @@ function initComparar(){
   renderCompararAno();
   renderCompararFeira();
   renderCompararEvento();
+  initCompararDuo();
+}
+
+/* ---- COMPARAR LADO A LADO (ano + feira em cada coluna) ---- */
+function initCompararDuo(){
+  const anos=comparAnosDisponiveis();
+  const opts=(anos.length?anos:[String(new Date().getFullYear())]);
+  ['duoAnoA','duoAnoB'].forEach((id,idx)=>{
+    const el=document.getElementById(id); if(!el)return;
+    el.innerHTML=opts.map(y=>`<option>${y}</option>`).join('');
+    el.value=(opts.length>=2)?(idx===0?opts[opts.length-2]:opts[opts.length-1]):opts[0];
+  });
+  refreshDuoFeiras('A'); refreshDuoFeiras('B');
+  renderCompararDuo();
+}
+function refreshDuoFeiras(lado){
+  const ano=document.getElementById('duo'+'Ano'+lado)?.value;
+  const el=document.getElementById('duoFeira'+lado); if(!el)return;
+  const anterior=el.value;
+  const lista=fairs.filter(f=>String(f.ano)===String(ano)).sort((a,b)=>a.nome.localeCompare(b.nome));
+  el.innerHTML='<option value="">Todas as feiras/eventos</option>'+lista.map(f=>`<option value="${f.id}">${f.nome}</option>`).join('');
+  if(anterior&&[...el.options].some(o=>o.value===anterior))el.value=anterior;
+}
+function duoDados(lado){
+  const ano=document.getElementById('duo'+'Ano'+lado)?.value;
+  const fid=document.getElementById('duoFeira'+lado)?.value;
+  let rotulo='Ano '+ano, pred=t=>String(t.ano)===String(ano)||(t.data||'').slice(0,4)===String(ano);
+  if(fid){
+    const f=fairs.find(x=>String(x.id)===String(fid));
+    if(f){ rotulo=f.nome+' · '+ano; pred=t=>(t.data||'')>=f.inicio&&(t.data||'')<=f.fim; }
+  }
+  const linhas=txList.filter(pred);
+  const rec=linhas.filter(t=>t.tipo==='Receita').reduce((s,t)=>s+t.valor,0);
+  const desp=linhas.filter(t=>t.tipo==='Despesa').reduce((s,t)=>s+t.valor,0);
+  // por dia
+  const dias={};
+  linhas.forEach(t=>{const d=t.data||'';if(!d)return;if(!dias[d])dias[d]={rec:0,desp:0};if(t.tipo==='Receita')dias[d].rec+=t.valor;else dias[d].desp+=t.valor;});
+  return {rotulo,rec,desp,saldo:rec-desp,n:linhas.length,dias};
+}
+function duoRender(lado,d,cor){
+  const box=document.getElementById('duoResult'+lado); if(!box)return;
+  const dd=Object.entries(d.dias).sort((a,b)=>a[0].localeCompare(b[0]));
+  box.innerHTML=`
+    <div style="font-size:13px;font-weight:700;margin-bottom:6px">${d.rotulo}</div>
+    <div style="font-size:12px;color:var(--teal)">Receita: <b>${fmt(d.rec)}</b></div>
+    <div style="font-size:12px;color:var(--red)">Despesa: <b>${fmt(d.desp)}</b></div>
+    <div style="font-size:16px;font-weight:700;margin:6px 0;color:${d.saldo>=0?'var(--teal)':'var(--red)'}">Saldo: ${fmt(d.saldo)}</div>
+    <div style="font-size:10px;color:var(--text3);margin-bottom:8px">${d.n} registos · ${dd.length} dias</div>
+    ${dd.length?`<div style="max-height:320px;overflow:auto;border-top:.5px solid var(--border)">
+      <table style="font-size:11px"><thead><tr><th>Dia</th><th style="text-align:right;color:var(--teal)">Receita</th><th style="text-align:right;color:var(--red)">Despesa</th><th style="text-align:right">Saldo</th></tr></thead>
+      <tbody>${dd.map(([dia,v])=>`<tr><td>${dia}</td><td style="text-align:right">${v.rec?fmt(v.rec):'—'}</td><td style="text-align:right">${v.desp?fmt(v.desp):'—'}</td><td style="text-align:right;font-weight:600;color:${(v.rec-v.desp)>=0?'var(--teal)':'var(--red)'}">${fmt(v.rec-v.desp)}</td></tr>`).join('')}</tbody></table>
+    </div>`:'<div class="empty" style="padding:12px">Sem lançamentos</div>'}`;
+}
+function renderCompararDuo(){
+  refreshDuoFeiras('A'); refreshDuoFeiras('B');
+  const A=duoDados('A'), B=duoDados('B');
+  duoRender('A',A,'var(--blue)'); duoRender('B',B,'var(--teal)');
+  const box=document.getElementById('duoResumo'); if(!box)return;
+  const dif=B.saldo-A.saldo;
+  const difRec=B.rec-A.rec, difDesp=B.desp-A.desp;
+  box.innerHTML=`<div class="card" style="padding:0;overflow:hidden"><table>
+    <thead><tr><th></th><th style="text-align:right">${A.rotulo}</th><th style="text-align:right">${B.rotulo}</th><th style="text-align:right">Diferença</th></tr></thead>
+    <tbody>
+      <tr><td style="font-weight:600;color:var(--teal)">Receita</td><td style="text-align:right">${fmt(A.rec)}</td><td style="text-align:right">${fmt(B.rec)}</td><td style="text-align:right;font-weight:600;color:${difRec>=0?'var(--teal)':'var(--red)'}">${difRec>0?'+':''}${fmt(difRec)}</td></tr>
+      <tr><td style="font-weight:600;color:var(--red)">Despesa</td><td style="text-align:right">${fmt(A.desp)}</td><td style="text-align:right">${fmt(B.desp)}</td><td style="text-align:right;font-weight:600;color:${difDesp<=0?'var(--teal)':'var(--red)'}">${difDesp>0?'+':''}${fmt(difDesp)}</td></tr>
+      <tr><td style="font-weight:700">Saldo</td><td style="text-align:right;font-weight:700">${fmt(A.saldo)}</td><td style="text-align:right;font-weight:700">${fmt(B.saldo)}</td><td style="text-align:right;font-weight:700;color:${dif>=0?'var(--teal)':'var(--red)'}">${dif>0?'+':''}${fmt(dif)}${A.saldo!==0?' ('+(dif>0?'+':'')+Math.round(dif/Math.abs(A.saldo)*100)+'%)':''}</td></tr>
+    </tbody></table></div>`;
 }
 function showComparar(mode,el){
   document.querySelectorAll('#page-comparar .tab').forEach(x=>x.classList.remove('active'));el.classList.add('active');
+  document.getElementById('compDuo').style.display=mode==='duo'?'block':'none';
   document.getElementById('compAno').style.display=mode==='ano'?'block':'none';
   document.getElementById('compFeira').style.display=mode==='feira'?'block':'none';
   document.getElementById('compEvento').style.display=mode==='evento'?'block':'none';
@@ -2821,6 +2893,11 @@ function setFiltroRapido(tipo,el){
     document.getElementById('fi-inicio').value='';
     document.getElementById('fi-fim').value='';
   }
+  aplicarFiltros();
+}
+function limparFiltros(){
+  ['fi-inicio','fi-fim','fi-ano','fi-tipo','fi-cat','fi-meio','fi-feira','fi-emp','fi-conta'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.querySelectorAll('#page-filtros .btn-sm.active').forEach(b=>b.classList.remove('active'));
   aplicarFiltros();
 }
 function aplicarFiltros(){
