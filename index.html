@@ -747,7 +747,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   </div>
   <div class="edit-banner" id="editBanner" style="display:none"><i class="ti ti-pencil"></i> Estás a editar um lançamento existente. Corrige o que precisas e guarda.</div>
   <div class="form-row">
-    <div class="form-group"><label class="form-label">Tipo</label><select id="f-tipo" onchange="refreshCatSelect()"><option value="Despesa">Despesa</option><option value="Receita">Receita</option><option value="Fundo de Caixa">Fundo de Caixa (trocos)</option></select></div>
+    <div class="form-group"><label class="form-label">Tipo</label><select id="f-tipo" onchange="refreshCatSelect()"><option value="Despesa">Despesa</option><option value="Receita">Receita</option></select></div>
     <div class="form-group"><label class="form-label">Data</label><input type="date" id="f-data" onchange="refreshContaSelect(document.getElementById('f-conta').value)"></div>
   </div>
   <div class="form-row">
@@ -1211,6 +1211,26 @@ function populateDashYear(){
   sel.innerHTML=['Todos',...anos].map(a=>`<option value="${a}"${String(a)===String(cur)?'selected':''}>${a}</option>`).join('');
   if(!cur)sel.value=anos[0];
 }
+/* Fundo de caixa como valor único e atual (não polui os lançamentos).
+   Guarda um único registo (tipo 'Fundo de Caixa'); ao atualizar, substitui o anterior. Sincroniza. */
+function editarFundoCaixa(){
+  const atual=txList.filter(t=>t.tipo==='Fundo de Caixa').sort((a,b)=>b.id-a.id)[0];
+  const v=prompt('Fundo de caixa — dinheiro dos trocos na caixa (€):', atual?String(atual.valor):'');
+  if(v===null)return;
+  const valor=parseFloat(String(v).replace(',','.'));
+  if(isNaN(valor)||valor<0){alert('Valor inválido.');return;}
+  // apaga os fundos anteriores (cloud + local) para ficar só um
+  txList.filter(t=>t.tipo==='Fundo de Caixa').forEach(t=>{ if(!t._local)supaDelete('lancamentos',t.id); });
+  txList=txList.filter(t=>t.tipo!=='Fundo de Caixa');
+  const hoje=new Date().toISOString().slice(0,10);
+  const novo={tipo:'Fundo de Caixa',cat:'Fundo de Caixa',conta:'',mes:'',ano:new Date().getFullYear(),valor,data:hoje,notas:'',meio:'Dinheiro',empregado:'',viatura:'',hasDoc:false};
+  const newId=nextId++;
+  txList.push({...novo,id:newId,_local:true});
+  saveToLocal();
+  supaInsert('lancamentos',novo).then(r=>{ if(r&&r[0]){ const e=txList.find(x=>x.id===newId); if(e){e.id=r[0].id;delete e._local;} saveToLocal(); } });
+  renderDashboard();
+  showSyncStatus('Fundo de caixa atualizado: '+fmt(valor));
+}
 function renderDashboard(){
   populateDashYear();
   const selEl=document.getElementById('dashYear');
@@ -1222,15 +1242,15 @@ function renderDashboard(){
   const rec=filtered.filter(t=>t.tipo==='Receita').reduce((a,b)=>a+b.valor,0);
   const desp=filtered.filter(t=>t.tipo==='Despesa').reduce((a,b)=>a+b.valor,0);
   const res=rec-desp;
-  // Fundo de caixa ATUAL = valor do registo mais recente (por data)
-  const _fundos=filtered.filter(t=>t.tipo==='Fundo de Caixa').sort((a,b)=>(b.data||'').localeCompare(a.data||'')||b.id-a.id);
+  // Fundo de caixa ATUAL = valor do registo mais recente (independente do ano selecionado)
+  const _fundos=txList.filter(t=>t.tipo==='Fundo de Caixa').sort((a,b)=>(b.data||'').localeCompare(a.data||'')||b.id-a.id);
   const _fundoAtual=_fundos.length?_fundos[0]:null;
   const metricsEl=document.getElementById('dash-metrics');
   const cartaoResultado=`<div class="metric" style="border:2px solid ${res>=0?'var(--teal)':'var(--red)'};background:${res>=0?'var(--teal-l)':'var(--red-l)'}"><div class="metric-label" style="font-weight:700;color:${res>=0?'var(--teal)':'var(--red)'}">💰 Resultado líquido</div><div class="metric-value" style="font-size:26px;color:${res>=0?'var(--teal)':'var(--red)'}">${fmt(res)}</div><div class="metric-sub" style="color:var(--text2)">Margem ${rec>0?Math.round(res/rec*100):0}%</div></div>`;
   if(metricsEl)metricsEl.innerHTML=cartaoResultado+`
     <div class="metric"><div class="metric-label">Receita total</div><div class="metric-value">${fmt(rec)}</div><div class="metric-sub" style="color:var(--teal)">↑ ${filtered.filter(t=>t.tipo==='Receita').length} registos</div></div>
     <div class="metric"><div class="metric-label">Despesas totais</div><div class="metric-value">${fmt(desp)}</div><div class="metric-sub" style="color:var(--red)">↓ ${filtered.filter(t=>t.tipo==='Despesa').length} registos</div></div>
-    <div class="metric" style="border:1.5px solid var(--blue-l)"><div class="metric-label" style="color:var(--blue)">🪙 Fundo de caixa</div><div class="metric-value" style="color:var(--blue)">${_fundoAtual?fmt(_fundoAtual.valor):'—'}</div><div class="metric-sub" style="color:var(--text2)">${_fundoAtual?'registado em '+_fundoAtual.data:'sem registo'}</div></div>
+    <div class="metric" style="border:1.5px solid var(--blue-l);cursor:pointer" onclick="editarFundoCaixa()" title="Clica para atualizar o fundo de caixa"><div class="metric-label" style="color:var(--blue)">🪙 Fundo de caixa <i class="ti ti-pencil" style="font-size:10px"></i></div><div class="metric-value" style="color:var(--blue)">${_fundoAtual?fmt(_fundoAtual.valor):'definir'}</div><div class="metric-sub" style="color:var(--text2)">${_fundoAtual?'atualizado em '+_fundoAtual.data:'toca para definir'}</div></div>
     <div class="metric"><div class="metric-label">Feiras / Eventos</div><div class="metric-value">${fairs.filter(f=>(anoSel==='Todos'||f.ano===String(anoSel))&&f.tipo!=='evento').length} / ${fairs.filter(f=>(anoSel==='Todos'||f.ano===String(anoSel))&&f.tipo==='evento').length}</div><div class="metric-sub" style="color:var(--text2)">feiras / eventos · ${[...new Set(filtered.map(t=>t.mes))].length} meses ativos</div></div>`;
   const rmEl=document.getElementById('dash-result-mobile');
   if(rmEl)rmEl.innerHTML=cartaoResultado;
@@ -1240,7 +1260,7 @@ function renderDashboard(){
   // Últimos lançamentos — a quantidade acompanha o nº de locais, para as duas colunas ficarem equilibradas
   const nRecent=Math.max(6, tL.length);
   const recentEl=document.getElementById('recentTx');
-  if(recentEl)recentEl.innerHTML=filtered.slice().sort((a,b)=>b.id-a.id).slice(0,nRecent).map(t=>`<tr>
+  if(recentEl)recentEl.innerHTML=filtered.filter(t=>t.tipo!=='Fundo de Caixa').sort((a,b)=>b.id-a.id).slice(0,nRecent).map(t=>`<tr>
     <td>${t.data}</td><td style="max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.conta||'—'}</td>
     <td><span class="pill ${t.tipo==='Receita'?'p-rec':t.tipo==='Despesa'?'p-desp':'p-fundo'}">${t.tipo}</span></td>
     <td style="text-align:right;font-weight:600;color:${t.tipo==='Receita'?'var(--teal)':'var(--red)'}">${fmt(t.valor)}</td></tr>`).join('');
@@ -1289,7 +1309,7 @@ function renderTxTable(){
   const fMeio=document.getElementById('filterMeio')?.value||'';
   const fFeira=document.getElementById('filterFeira')?.value||'';
   const fEmp=document.getElementById('filterEmp')?.value||'';
-  let data=txList.slice();
+  let data=txList.filter(t=>t.tipo!=='Fundo de Caixa');
   if(activeFilter!=='todos')data=data.filter(t=>t.tipo===activeFilter);
   if(fM)data=data.filter(t=>t.mes===fM);
   if(fC)data=data.filter(t=>t.cat===fC);
