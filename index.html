@@ -237,7 +237,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   .mobile-nav{display:flex}
   .main{padding-bottom:120px}
   .page{padding:.75rem}
-  .metrics{grid-template-columns:repeat(2,1fr)}
+  .metrics{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
   .metrics-3{grid-template-columns:repeat(2,1fr)}
   .grid2{grid-template-columns:1fr}
   .form-row{grid-template-columns:1fr}
@@ -269,7 +269,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   .result-stat-val{font-size:15px}
 }
 @media(max-width:480px){
-  .metrics{grid-template-columns:1fr 1fr}
+  .metrics{grid-template-columns:repeat(auto-fit,minmax(125px,1fr))}
   .filter-grid{grid-template-columns:1fr}
   .page{padding:.5rem}
   .metric-value{font-size:16px}
@@ -1508,7 +1508,7 @@ function saveTx(){
   } else {
     const novo={tipo,cat,conta,mes,ano,valor:valorFinal,data,notas:notasFinal,meio,empregado,viatura,hasDoc:!!docData};
     const newId=nextId++;
-    const novoTx={...novo,id:newId};
+    const novoTx={...novo,id:newId,_local:true};
     txList.push(novoTx);
     if(docData)saveDocLocal(newId,docData);
     saveToLocal();
@@ -1516,6 +1516,7 @@ function saveTx(){
       if(r&&r[0]){
         const oldId=newId;
         txList[txList.length-1].id=r[0].id;
+        delete txList[txList.length-1]._local;
         // move doc to new id
         if(docData){saveDocLocal(r[0].id,docData);deleteDocLocal(oldId);}
         saveToLocal();
@@ -2476,7 +2477,7 @@ function importarExcel(e){
             id:parseInt(r.ID)||nextId++,tipo:r.Tipo||'Despesa',cat:r.Categoria||'',
             conta:r.Conta||'',mes:r['Mês']||'',ano:parseInt(r.Ano)||new Date().getFullYear(),
             valor:parseFloat(r.Valor)||0,data:r.Data||'',notas:r.Notas||'',
-            meio:r.Meio||'Dinheiro',empregado:r.Empregado||''
+            meio:r.Meio||'Dinheiro',empregado:r.Empregado||'',_local:true
           }));
           if(txList.length)nextId=Math.max(...txList.map(t=>t.id))+1;
         }
@@ -2485,7 +2486,7 @@ function importarExcel(e){
       if(wb.Sheets['Feiras']){
         const rows=XLSX.utils.sheet_to_json(wb.Sheets['Feiras']);
         if(rows.length){
-          fairs=rows.map(r=>({id:parseInt(r.ID)||nextFairId++,nome:r.Nome||'',inicio:r['Início']||r.Inicio||'',fim:r.Fim||'',ano:String(r.Ano||''),cor:r.Cor||'#BA7517',tipo:r.Tipo||'feira'}));
+          fairs=rows.map(r=>({id:parseInt(r.ID)||nextFairId++,nome:r.Nome||'',inicio:r['Início']||r.Inicio||'',fim:r.Fim||'',ano:String(r.Ano||''),cor:r.Cor||'#BA7517',tipo:r.Tipo||'feira',_local:true}));
           if(fairs.length)nextFairId=Math.max(...fairs.map(f=>f.id))+1;
         }
       }
@@ -2557,8 +2558,8 @@ async function supaFetch(table,method='GET',body=null,filter=null){
   }
 }
 async function supaGet(table){return supaFetch(table,'GET',null,'order=id.asc');}
-async function supaInsert(table,data){const d={...data};delete d.id;return supaFetch(table,'POST',d);}
-async function supaUpdate(table,id,data){const d={...data};delete d.id;return supaFetch(table,'PATCH',d,'id=eq.'+id);}
+async function supaInsert(table,data){const d={...data};delete d.id;delete d._local;return supaFetch(table,'POST',d);}
+async function supaUpdate(table,id,data){const d={...data};delete d.id;delete d._local;return supaFetch(table,'PATCH',d,'id=eq.'+id);}
 async function supaDelete(table,id){return supaFetch(table,'DELETE',null,'id=eq.'+id);}
 
 /* Envia para a cloud os lançamentos e feiras/eventos que só existem neste dispositivo
@@ -2580,7 +2581,7 @@ async function syncLocalToCloud(){
       try{
         const r=await supaInsert('lancamentos',t);
         if(r&&r[0]){
-          t.id=r[0].id;
+          t.id=r[0].id; delete t._local;
           const doc=loadDocLocal(oldId); if(doc){saveDocLocal(r[0].id,doc);deleteDocLocal(oldId);}
           const did=loadDocDriveId(oldId); if(did){saveDocDriveId(r[0].id,did);deleteDocDriveId(oldId);}
           nTx++;
@@ -2588,7 +2589,7 @@ async function syncLocalToCloud(){
       }catch(e){console.error('Envio lançamento falhou',oldId,e);}
     }
     for(const f of fairs.filter(f=>!fCloudIds.has(f.id))){
-      try{ const r=await supaInsert('feiras',f); if(r&&r[0]){f.id=r[0].id;nF++;} }
+      try{ const r=await supaInsert('feiras',f); if(r&&r[0]){f.id=r[0].id;delete f._local;nF++;} }
       catch(e){console.error('Envio feira falhou',f.id,e);}
     }
     saveToLocal();
@@ -2645,18 +2646,19 @@ async function loadAllFromCloud(){
     ]);
 
     if(Array.isArray(tx)){
-      // A cloud é a fonte principal, MAS preservamos os lançamentos locais que ainda não
-      // existem na cloud (ex.: importados de Excel ou criados offline), para nunca se perderem.
+      // A cloud é a fonte principal. Preservamos SÓ os lançamentos ainda não enviados (marcados
+      // _local, ex.: importados de Excel). Os já sincronizados seguem a cloud — por isso apagar
+      // num dispositivo apaga em todos.
       const cloud=tx.map(t=>({...t,valor:parseFloat(t.valor)||0}));
       const cloudIds=new Set(cloud.map(t=>t.id));
-      const locaisNaoSync=txList.filter(t=>!cloudIds.has(t.id));
+      const locaisNaoSync=txList.filter(t=>!cloudIds.has(t.id) && t._local);
       txList=[...cloud, ...locaisNaoSync];
       nextId=txList.length?Math.max(...txList.map(t=>t.id))+1:1;
       saveToLocal();
     }
     if(Array.isArray(fs)){
       const fCloudIds=new Set(fs.map(f=>f.id));
-      const fLocais=fairs.filter(f=>!fCloudIds.has(f.id));
+      const fLocais=fairs.filter(f=>!fCloudIds.has(f.id) && f._local);
       fairs=[...fs, ...fLocais];
       if(fairs.length)nextFairId=Math.max(...fairs.map(f=>f.id))+1;
     }
