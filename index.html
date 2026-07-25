@@ -691,6 +691,11 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
         <option value="Receita">Só Receitas</option>
         <option value="Despesa">Só Despesas</option>
       </select>
+      <span style="font-size:12px;color:var(--text2);font-weight:600;margin-left:6px">Ordem:</span>
+      <select id="duoOrdem" onchange="renderCompararDuo()" style="padding:6px 10px;font-size:13px;border-radius:var(--radius);border:.5px solid var(--border2)">
+        <option value="desc">Mais recentes primeiro</option>
+        <option value="asc">Mais antigos primeiro</option>
+      </select>
     </div>
     <div class="grid2">
       <div class="card" style="padding:14px">
@@ -2196,7 +2201,9 @@ function duoRender(lado,d,cor){
   const box=document.getElementById('duoResult'+lado); if(!box)return;
   const nDias=Object.keys(d.dias).length;
   const ft=document.getElementById('duoFiltroTipo')?.value||'';
-  const lista=ft?d.lista.filter(t=>t.tipo===ft):d.lista;
+  const ordem=document.getElementById('duoOrdem')?.value||'desc';
+  let lista=ft?d.lista.filter(t=>t.tipo===ft):d.lista.slice();
+  lista.sort((a,b)=>{const c=(a.data||'').localeCompare(b.data||'')||a.id-b.id;return ordem==='asc'?c:-c;});
   const somaLista=lista.reduce((s,t)=>s+t.valor,0);
   box.innerHTML=`
     <div style="font-size:13px;font-weight:700;margin-bottom:6px">${d.rotulo}</div>
