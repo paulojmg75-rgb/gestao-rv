@@ -237,7 +237,8 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   .mobile-nav{display:flex}
   .main{padding-bottom:120px}
   .page{padding:.75rem}
-  .metrics{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+  .metrics{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:8px;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+  .metrics>.metric{flex:1 0 128px}
   .metrics-3{grid-template-columns:repeat(2,1fr)}
   .grid2{grid-template-columns:1fr}
   .form-row{grid-template-columns:1fr}
@@ -269,7 +270,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   .result-stat-val{font-size:15px}
 }
 @media(max-width:480px){
-  .metrics{grid-template-columns:repeat(auto-fit,minmax(125px,1fr))}
+  .metrics>.metric{flex:1 0 116px}
   .filter-grid{grid-template-columns:1fr}
   .page{padding:.5rem}
   .metric-value{font-size:16px}
