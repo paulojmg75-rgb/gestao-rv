@@ -79,7 +79,7 @@ body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;backgrou
 .page-header p{font-size:11px;color:var(--text2);margin-top:2px}
 
 /* METRICS */
-.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1rem}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:1rem}
 .metrics-3{grid-template-columns:repeat(3,1fr)}
 .metric{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:.75rem .9rem;box-shadow:var(--shadow-sm);border-top:2.5px solid var(--accent);transition:transform .15s,box-shadow .15s}
 .metric:hover{transform:translateY(-1px);box-shadow:var(--shadow-md)}
@@ -106,6 +106,7 @@ tr:hover td{background:var(--bg3)}
 .pill{display:inline-block;font-size:9px;padding:2px 7px;border-radius:20px;font-weight:700;letter-spacing:.02em}
 .p-rec{background:var(--teal-l);color:var(--teal)}
 .p-desp{background:var(--red-l);color:var(--red)}
+.p-fundo{background:var(--blue-l);color:var(--blue)}
 
 /* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:4px;padding:6px 11px;border-radius:var(--radius);font-size:11px;cursor:pointer;border:1px solid var(--border2);background:var(--bg2);color:var(--text);transition:all .15s;font-family:inherit;font-weight:600;box-shadow:var(--shadow-sm)}
@@ -731,7 +732,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   </div>
   <div class="edit-banner" id="editBanner" style="display:none"><i class="ti ti-pencil"></i> Estás a editar um lançamento existente. Corrige o que precisas e guarda.</div>
   <div class="form-row">
-    <div class="form-group"><label class="form-label">Tipo</label><select id="f-tipo" onchange="refreshCatSelect()"><option value="Despesa">Despesa</option><option value="Receita">Receita</option></select></div>
+    <div class="form-group"><label class="form-label">Tipo</label><select id="f-tipo" onchange="refreshCatSelect()"><option value="Despesa">Despesa</option><option value="Receita">Receita</option><option value="Fundo de Caixa">Fundo de Caixa (trocos)</option></select></div>
     <div class="form-group"><label class="form-label">Data</label><input type="date" id="f-data" onchange="refreshContaSelect(document.getElementById('f-conta').value)"></div>
   </div>
   <div class="form-row">
@@ -1206,11 +1207,15 @@ function renderDashboard(){
   const rec=filtered.filter(t=>t.tipo==='Receita').reduce((a,b)=>a+b.valor,0);
   const desp=filtered.filter(t=>t.tipo==='Despesa').reduce((a,b)=>a+b.valor,0);
   const res=rec-desp;
+  // Fundo de caixa ATUAL = valor do registo mais recente (por data)
+  const _fundos=filtered.filter(t=>t.tipo==='Fundo de Caixa').sort((a,b)=>(b.data||'').localeCompare(a.data||'')||b.id-a.id);
+  const _fundoAtual=_fundos.length?_fundos[0]:null;
   const metricsEl=document.getElementById('dash-metrics');
   if(metricsEl)metricsEl.innerHTML=`
     <div class="metric" style="border:2px solid ${res>=0?'var(--teal)':'var(--red)'};background:${res>=0?'var(--teal-l)':'var(--red-l)'}"><div class="metric-label" style="font-weight:700;color:${res>=0?'var(--teal)':'var(--red)'}">💰 Resultado líquido</div><div class="metric-value" style="font-size:26px;color:${res>=0?'var(--teal)':'var(--red)'}">${fmt(res)}</div><div class="metric-sub" style="color:var(--text2)">Margem ${rec>0?Math.round(res/rec*100):0}%</div></div>
     <div class="metric"><div class="metric-label">Receita total</div><div class="metric-value">${fmt(rec)}</div><div class="metric-sub" style="color:var(--teal)">↑ ${filtered.filter(t=>t.tipo==='Receita').length} registos</div></div>
     <div class="metric"><div class="metric-label">Despesas totais</div><div class="metric-value">${fmt(desp)}</div><div class="metric-sub" style="color:var(--red)">↓ ${filtered.filter(t=>t.tipo==='Despesa').length} registos</div></div>
+    <div class="metric" style="border:1.5px solid var(--blue-l)"><div class="metric-label" style="color:var(--blue)">🪙 Fundo de caixa</div><div class="metric-value" style="color:var(--blue)">${_fundoAtual?fmt(_fundoAtual.valor):'—'}</div><div class="metric-sub" style="color:var(--text2)">${_fundoAtual?'registado em '+_fundoAtual.data:'sem registo'}</div></div>
     <div class="metric"><div class="metric-label">Feiras / Eventos</div><div class="metric-value">${fairs.filter(f=>(anoSel==='Todos'||f.ano===String(anoSel))&&f.tipo!=='evento').length} / ${fairs.filter(f=>(anoSel==='Todos'||f.ano===String(anoSel))&&f.tipo==='evento').length}</div><div class="metric-sub" style="color:var(--text2)">feiras / eventos · ${[...new Set(filtered.map(t=>t.mes))].length} meses ativos</div></div>`;
   // Receita por local — TODAS as feiras/locais (sem limite)
   const lM={};filtered.filter(t=>t.tipo==='Receita').forEach(t=>{const c=(t.conta||'').replace(/-SIMULADOR|-Máq\. Machado/,'');if(!c)return;lM[c]=(lM[c]||0)+t.valor;});
@@ -1220,7 +1225,7 @@ function renderDashboard(){
   const recentEl=document.getElementById('recentTx');
   if(recentEl)recentEl.innerHTML=filtered.slice().sort((a,b)=>b.id-a.id).slice(0,nRecent).map(t=>`<tr>
     <td>${t.data}</td><td style="max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.conta||'—'}</td>
-    <td><span class="pill ${t.tipo==='Receita'?'p-rec':'p-desp'}">${t.tipo}</span></td>
+    <td><span class="pill ${t.tipo==='Receita'?'p-rec':t.tipo==='Despesa'?'p-desp':'p-fundo'}">${t.tipo}</span></td>
     <td style="text-align:right;font-weight:600;color:${t.tipo==='Receita'?'var(--teal)':'var(--red)'}">${fmt(t.valor)}</td></tr>`).join('');
   const localBarsEl=document.getElementById('localBars');
   if(localBarsEl)localBarsEl.innerHTML=tL.length?tL.map(([l,v],i)=>`<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;gap:8px;font-size:10.5px;margin-bottom:2px"><span style="color:var(--text);font-weight:500">${l}</span><span style="color:var(--text2);white-space:nowrap">${fmt(v)}</span></div><div class="bar-wrap" style="height:9px"><div class="bar-fill" style="width:${Math.round(v/maxL*100)}%;background:${COLS[i%COLS.length]}">&nbsp;</div></div></div>`).join(''):`<div class="empty" style="padding:1rem">Sem receitas para ${anoSel}</div>`;
@@ -1303,7 +1308,7 @@ function renderTxTable(){
     <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.conta}">${t.conta}${t.notas?`<br><span style="font-size:10px;color:var(--text2)">${t.notas}</span>`:''}</td>
     <td style="white-space:nowrap">${meioIcon[t.meio]||'🔹'} ${t.meio||'—'}</td>
     <td style="font-size:11px;color:var(--blue)">${t.empregado||'—'}</td>
-    <td><span class="pill ${t.tipo==='Receita'?'p-rec':'p-desp'}">${t.tipo}</span></td>
+    <td><span class="pill ${t.tipo==='Receita'?'p-rec':t.tipo==='Despesa'?'p-desp':'p-fundo'}">${t.tipo}</span></td>
     <td style="text-align:right;font-weight:600;color:${t.tipo==='Receita'?'var(--teal)':'var(--red)'}">${fmt(t.valor)}</td>
     <td style="text-align:center;white-space:nowrap">
       ${t.hasDoc?`<button class="btn btn-sm btn-icon" onclick="viewDoc(${t.id})" title="Ver documento" style="color:var(--amber);background:var(--amber-l);border-color:var(--amber-l)"><i class="ti ti-file" style="font-size:11px"></i></button>
@@ -1389,14 +1394,22 @@ function closeTxModal(){document.getElementById('txModal').style.display='none';
 function getCatList(){return document.getElementById('f-tipo').value==='Receita'?catsRec:catsDesp;}
 function refreshCatSelect(sel){
   const tipo=document.getElementById('f-tipo').value;
+  const splitBox=document.getElementById('split-box');
+  if(splitBox)splitBox.style.display=tipo==='Receita'?'block':'none';
+  if(tipo!=='Receita'){setSplitOff();}
+  // Fundo de Caixa: categoria fixa (não é receita nem despesa; não conta no lucro)
+  if(tipo==='Fundo de Caixa'){
+    const label=document.getElementById('cat-label-text');if(label)label.textContent='Categoria';
+    const addBtn=document.getElementById('new-cat-link');if(addBtn)addBtn.textContent='';
+    const s=document.getElementById('f-cat');
+    if(s)s.innerHTML='<option value="Fundo de Caixa">Fundo de Caixa</option>';
+    return;
+  }
   const list=tipo==='Receita'?catsRec:catsDesp;
   const label=document.getElementById('cat-label-text');
   const addBtn=document.getElementById('new-cat-link');
   if(label)label.textContent=tipo==='Receita'?'Tipo de receita':'Categoria de despesa';
   if(addBtn)addBtn.textContent=tipo==='Receita'?'+ Novo tipo de receita':'+ Nova categoria';
-  const splitBox=document.getElementById('split-box');
-  if(splitBox)splitBox.style.display=tipo==='Receita'?'block':'none';
-  if(tipo!=='Receita'){setSplitOff();}
   const s=document.getElementById('f-cat');
   s.innerHTML=list.map(c=>`<option${sel&&c===sel?' selected':''}>${c}</option>`).join('');
   if(sel&&!list.includes(sel))s.innerHTML+=`<option selected>${sel}</option>`;
@@ -2155,7 +2168,7 @@ function duoRender(lado,d,cor){
     <div style="font-size:10px;font-weight:700;color:var(--text2);margin:6px 0 4px">${ft?ft.toUpperCase()+'S':'TODOS'} (${lista.length}) · ${fmt(somaLista)}</div>
     <div style="max-height:420px;overflow:auto;border-top:.5px solid var(--border)">
       <table style="font-size:11px"><thead><tr><th>Data</th><th>Categoria</th><th>Tipo</th><th style="text-align:right">Valor</th></tr></thead>
-      <tbody>${lista.map(t=>`<tr><td style="white-space:nowrap">${t.data||'—'}</td><td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.cat||'—'}</td><td><span class="pill ${t.tipo==='Receita'?'p-rec':'p-desp'}">${t.tipo}</span></td><td style="text-align:right;font-weight:600;color:${t.tipo==='Receita'?'var(--teal)':'var(--red)'}">${fmt(t.valor)}</td></tr>`).join('')}</tbody></table>
+      <tbody>${lista.map(t=>`<tr><td style="white-space:nowrap">${t.data||'—'}</td><td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.cat||'—'}</td><td><span class="pill ${t.tipo==='Receita'?'p-rec':t.tipo==='Despesa'?'p-desp':'p-fundo'}">${t.tipo}</span></td><td style="text-align:right;font-weight:600;color:${t.tipo==='Receita'?'var(--teal)':'var(--red)'}">${fmt(t.valor)}</td></tr>`).join('')}</tbody></table>
     </div>`:'<div class="empty" style="padding:12px">Sem lançamentos</div>'}`;
 }
 function renderCompararDuo(){
@@ -2957,7 +2970,7 @@ function aplicarFiltros(){
     <td style="max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.conta}</td>
     <td>${t.empregado||'—'}</td>
     <td>${meioIcon[t.meio]||'—'} ${t.meio||'—'}</td>
-    <td><span class="pill ${t.tipo==='Receita'?'p-rec':'p-desp'}">${t.tipo}</span></td>
+    <td><span class="pill ${t.tipo==='Receita'?'p-rec':t.tipo==='Despesa'?'p-desp':'p-fundo'}">${t.tipo}</span></td>
     <td style="text-align:right;font-weight:600;color:${t.tipo==='Receita'?'var(--teal)':'var(--red)'}">${fmt(t.valor)}</td>
   </tr>`).join(''):`<tr><td colspan="7"><div class="empty"><i class="ti ti-inbox"></i>Sem resultados</div></td></tr>`;
 }
