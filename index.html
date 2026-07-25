@@ -684,7 +684,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
     <div class="tab" onclick="showComparar('evento',this)">Por evento</div>
   </div>
   <div id="compDuo">
-    <div class="card" style="padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+    <div class="card" style="padding:8px 14px;margin-bottom:12px;display:inline-flex;align-items:center;gap:16px;flex-wrap:wrap;width:fit-content;max-width:100%">
       <div style="display:flex;align-items:center;gap:8px">
         <span style="font-size:12px;color:var(--text2);font-weight:600;white-space:nowrap">Mostrar:</span>
         <select id="duoFiltroTipo" onchange="renderCompararDuo()" style="padding:6px 10px;font-size:13px;border-radius:var(--radius);border:.5px solid var(--border2)">
@@ -2192,7 +2192,7 @@ function duoDados(lado){
     const f=fairs.find(x=>String(x.id)===String(fid));
     if(f){ rotulo=f.nome+' · '+ano; pred=t=>(t.data||'')>=f.inicio&&(t.data||'')<=f.fim; }
   }
-  const linhas=txList.filter(pred);
+  const linhas=txList.filter(t=>t.tipo!=='Fundo de Caixa').filter(pred);
   const rec=linhas.filter(t=>t.tipo==='Receita').reduce((s,t)=>s+t.valor,0);
   const desp=linhas.filter(t=>t.tipo==='Despesa').reduce((s,t)=>s+t.valor,0);
   // por dia
