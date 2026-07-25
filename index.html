@@ -239,12 +239,14 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   .main{padding-bottom:120px}
   .page{padding:.75rem}
   .only-mobile{display:block}
-  #dash-result-mobile{flex:1 1 150px;min-width:150px}
-  #dash-result-mobile .metric{margin:0;padding:8px 12px}
-  #dash-result-mobile .metric-value{font-size:20px}
+  #dash-result-mobile{flex:1 1 auto;min-width:132px}
+  #dash-result-mobile .metric{margin:0;padding:5px 11px;border-width:1.5px;box-shadow:none;display:flex;flex-direction:column;justify-content:center}
+  #dash-result-mobile .metric-label{font-size:9.5px;margin-bottom:0}
+  #dash-result-mobile .metric-value{font-size:16px}
+  #dash-result-mobile .metric-sub{font-size:8px;margin-top:0}
   #dash-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;overflow:visible}
-  #dash-metrics>.metric{padding:7px 5px}
-  #dash-metrics>.metric>.metric-label{font-size:8.5px;line-height:1.15}
+  #dash-metrics>.metric{padding:8px 5px;border:1px solid var(--border)!important;border-top:2px solid var(--accent)!important;box-shadow:none;background:var(--bg2)}
+  #dash-metrics>.metric>.metric-label{font-size:8.5px;line-height:1.15;color:var(--text2)!important;font-weight:600}
   #dash-metrics>.metric>.metric-value{font-size:clamp(11px,3.4vw,15px)}
   #dash-metrics>.metric>.metric-sub{font-size:7.5px;line-height:1.15}
   #dash-metrics>.metric:first-child{display:none}
