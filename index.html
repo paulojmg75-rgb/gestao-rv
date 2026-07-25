@@ -239,17 +239,17 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   .main{padding-bottom:120px}
   .page{padding:.75rem}
   .only-mobile{display:block}
-  #dash-result-mobile{flex:1 1 auto;min-width:132px}
-  #dash-result-mobile .metric{margin:0;padding:5px 11px;border-width:1.5px;box-shadow:none;display:flex;flex-direction:column;justify-content:center}
-  #dash-result-mobile .metric-label{font-size:9.5px;margin-bottom:0}
-  #dash-result-mobile .metric-value{font-size:16px}
-  #dash-result-mobile .metric-sub{font-size:8px;margin-top:0}
-  #dash-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;overflow:visible}
+  #dash-result-mobile{flex:1 1 100%;display:flex;gap:5px;margin-top:2px}
+  #dash-result-mobile>.metric{flex:1;margin:0;padding:5px 10px;border-width:1.5px;box-shadow:none;display:flex;flex-direction:column;justify-content:center}
+  #dash-result-mobile .metric-label{font-size:9px;margin-bottom:0}
+  #dash-result-mobile .metric-value{font-size:15px!important}
+  #dash-result-mobile .metric-sub{font-size:7.5px;margin-top:0}
+  #dash-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;overflow:visible}
   #dash-metrics>.metric{padding:8px 5px;border:1px solid var(--border)!important;border-top:2px solid var(--accent)!important;box-shadow:none;background:var(--bg2)}
-  #dash-metrics>.metric>.metric-label{font-size:8.5px;line-height:1.15;color:var(--text2)!important;font-weight:600}
-  #dash-metrics>.metric>.metric-value{font-size:clamp(11px,3.4vw,15px)}
-  #dash-metrics>.metric>.metric-sub{font-size:7.5px;line-height:1.15}
-  #dash-metrics>.metric:first-child{display:none}
+  #dash-metrics>.metric>.metric-label{font-size:9px;line-height:1.15;color:var(--text2)!important;font-weight:600}
+  #dash-metrics>.metric>.metric-value{font-size:clamp(12px,3.6vw,16px)}
+  #dash-metrics>.metric>.metric-sub{font-size:8px;line-height:1.15}
+  #dash-metrics>.mob-top{display:none}
   .metrics-3{grid-template-columns:repeat(2,1fr)}
   .grid2{grid-template-columns:1fr}
   .form-row{grid-template-columns:1fr}
@@ -281,7 +281,8 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   .result-stat-val{font-size:15px}
 }
 @media(max-width:480px){
-  #dash-result-mobile .metric-value{font-size:18px}
+  #dash-result-mobile .metric-value{font-size:14px!important}
+  #dash-metrics>.metric>.metric-value{font-size:clamp(11px,3.3vw,15px)}
   .filter-grid{grid-template-columns:1fr}
   .page{padding:.5rem}
   .metric-value{font-size:16px}
@@ -1246,14 +1247,15 @@ function renderDashboard(){
   const _fundos=txList.filter(t=>t.tipo==='Fundo de Caixa').sort((a,b)=>(b.data||'').localeCompare(a.data||'')||b.id-a.id);
   const _fundoAtual=_fundos.length?_fundos[0]:null;
   const metricsEl=document.getElementById('dash-metrics');
-  const cartaoResultado=`<div class="metric" style="border:2px solid ${res>=0?'var(--teal)':'var(--red)'};background:${res>=0?'var(--teal-l)':'var(--red-l)'}"><div class="metric-label" style="font-weight:700;color:${res>=0?'var(--teal)':'var(--red)'}">💰 Resultado líquido</div><div class="metric-value" style="font-size:26px;color:${res>=0?'var(--teal)':'var(--red)'}">${fmt(res)}</div><div class="metric-sub" style="color:var(--text2)">Margem ${rec>0?Math.round(res/rec*100):0}%</div></div>`;
+  const cartaoResultado=`<div class="metric mob-top" style="border:2px solid ${res>=0?'var(--teal)':'var(--red)'};background:${res>=0?'var(--teal-l)':'var(--red-l)'}"><div class="metric-label" style="font-weight:700;color:${res>=0?'var(--teal)':'var(--red)'}">💰 Resultado líquido</div><div class="metric-value" style="font-size:26px;color:${res>=0?'var(--teal)':'var(--red)'}">${fmt(res)}</div><div class="metric-sub" style="color:var(--text2)">Margem ${rec>0?Math.round(res/rec*100):0}%</div></div>`;
+  const cartaoFundo=`<div class="metric mob-top" style="border:1.5px solid var(--blue-l);cursor:pointer" onclick="editarFundoCaixa()" title="Clica para atualizar o fundo de caixa"><div class="metric-label" style="color:var(--blue)">🪙 Fundo de caixa <i class="ti ti-pencil" style="font-size:10px"></i></div><div class="metric-value" style="color:var(--blue)">${_fundoAtual?fmt(_fundoAtual.valor):'definir'}</div><div class="metric-sub" style="color:var(--text2)">${_fundoAtual?'atualizado em '+_fundoAtual.data:'toca para definir'}</div></div>`;
   if(metricsEl)metricsEl.innerHTML=cartaoResultado+`
-    <div class="metric"><div class="metric-label">Receita total</div><div class="metric-value">${fmt(rec)}</div><div class="metric-sub" style="color:var(--teal)">↑ ${filtered.filter(t=>t.tipo==='Receita').length} registos</div></div>
-    <div class="metric"><div class="metric-label">Despesas totais</div><div class="metric-value">${fmt(desp)}</div><div class="metric-sub" style="color:var(--red)">↓ ${filtered.filter(t=>t.tipo==='Despesa').length} registos</div></div>
-    <div class="metric" style="border:1.5px solid var(--blue-l);cursor:pointer" onclick="editarFundoCaixa()" title="Clica para atualizar o fundo de caixa"><div class="metric-label" style="color:var(--blue)">🪙 Fundo de caixa <i class="ti ti-pencil" style="font-size:10px"></i></div><div class="metric-value" style="color:var(--blue)">${_fundoAtual?fmt(_fundoAtual.valor):'definir'}</div><div class="metric-sub" style="color:var(--text2)">${_fundoAtual?'atualizado em '+_fundoAtual.data:'toca para definir'}</div></div>
-    <div class="metric"><div class="metric-label">Feiras / Eventos</div><div class="metric-value">${fairs.filter(f=>(anoSel==='Todos'||f.ano===String(anoSel))&&f.tipo!=='evento').length} / ${fairs.filter(f=>(anoSel==='Todos'||f.ano===String(anoSel))&&f.tipo==='evento').length}</div><div class="metric-sub" style="color:var(--text2)">feiras / eventos · ${[...new Set(filtered.map(t=>t.mes))].length} meses ativos</div></div>`;
+    <div class="metric" style="border-top:2.5px solid var(--teal)"><div class="metric-label">Receita total</div><div class="metric-value">${fmt(rec)}</div><div class="metric-sub" style="color:var(--teal)">↑ ${filtered.filter(t=>t.tipo==='Receita').length} registos</div></div>
+    <div class="metric" style="border-top:2.5px solid var(--red)"><div class="metric-label">Despesas totais</div><div class="metric-value">${fmt(desp)}</div><div class="metric-sub" style="color:var(--red)">↓ ${filtered.filter(t=>t.tipo==='Despesa').length} registos</div></div>`
+    +cartaoFundo+`
+    <div class="metric" style="border-top:2.5px solid var(--amber)"><div class="metric-label">Feiras / Eventos</div><div class="metric-value">${fairs.filter(f=>(anoSel==='Todos'||f.ano===String(anoSel))&&f.tipo!=='evento').length} / ${fairs.filter(f=>(anoSel==='Todos'||f.ano===String(anoSel))&&f.tipo==='evento').length}</div><div class="metric-sub" style="color:var(--text2)">feiras / eventos · ${[...new Set(filtered.map(t=>t.mes))].length} meses ativos</div></div>`;
   const rmEl=document.getElementById('dash-result-mobile');
-  if(rmEl)rmEl.innerHTML=cartaoResultado;
+  if(rmEl)rmEl.innerHTML=cartaoResultado+cartaoFundo;
   // Receita por local — TODAS as feiras/locais (sem limite)
   const lM={};filtered.filter(t=>t.tipo==='Receita').forEach(t=>{const c=(t.conta||'').replace(/-SIMULADOR|-Máq\. Machado/,'');if(!c)return;lM[c]=(lM[c]||0)+t.valor;});
   const tL=Object.entries(lM).sort((a,b)=>b[1]-a[1]),maxL=Math.max(...tL.map(x=>x[1]),1);
