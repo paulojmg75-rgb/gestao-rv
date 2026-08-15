@@ -312,7 +312,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
 
   <span class="nav-section">Principal</span>
   <div class="nav-item active" data-page="dashboard"><i class="ti ti-layout-dashboard" style="color:var(--amber)"></i> Dashboard</div>
-  <div class="nav-item" data-page="lancamentos"><i class="ti ti-plus-circle" style="color:var(--teal)"></i> Lançamentos</div>
+  <div class="nav-item" data-page="lancamentos"><i class="ti ti-receipt" style="color:var(--teal)"></i> Lançamentos</div>
   <div class="nav-divider"></div>
   <div class="nav-item" data-page="feiras"><i class="ti ti-calendar-event" style="color:var(--blue)"></i> Feiras/Eventos</div>
   <div class="nav-item" data-page="empregados"><i class="ti ti-users" style="color:var(--red)"></i> Empregados</div>
@@ -355,7 +355,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
 <!-- MOBILE BOTTOM NAV -->
 <nav class="mobile-nav">
   <div class="mobile-nav-item active" data-page="dashboard"><i class="ti ti-layout-dashboard"></i><span>Início</span></div>
-  <div class="mobile-nav-item" data-page="lancamentos"><i class="ti ti-plus-circle"></i><span>Lançar</span></div>
+  <div class="mobile-nav-item" data-page="lancamentos"><i class="ti ti-receipt"></i><span>Lançar</span></div>
   <div class="mobile-nav-item" data-page="feiras"><i class="ti ti-calendar-event"></i><span>Feiras/Ev.</span></div>
   <div class="mobile-nav-item" data-page="filtros"><i class="ti ti-filter"></i><span>Filtros</span></div>
   <div class="mobile-nav-item" id="mobileMoreBtn" onclick="toggleMobileMore()"><i class="ti ti-dots"></i><span>Mais</span></div>
@@ -760,7 +760,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   <div class="edit-banner" id="editBanner" style="display:none"><i class="ti ti-pencil"></i> Estás a editar um lançamento existente. Corrige o que precisas e guarda.</div>
   <div class="form-row">
     <div class="form-group"><label class="form-label">Tipo</label><select id="f-tipo" onchange="refreshCatSelect()"><option value="Despesa">Despesa</option><option value="Receita">Receita</option></select></div>
-    <div class="form-group"><label class="form-label">Data</label><input type="date" id="f-data" onchange="refreshContaSelect(document.getElementById('f-conta').value)"></div>
+    <div class="form-group"><label class="form-label">Data</label><input type="date" id="f-data" onchange="onDataChange()"></div>
   </div>
   <div class="form-row">
     <div class="form-group"><label class="form-label">Mês</label>
@@ -1493,10 +1493,21 @@ function toggleViatField(){
     }
   }
 }
+function onDataChange(){
+  const d=document.getElementById('f-data').value;
+  if(d){
+    const dt=new Date(d+'T00:00:00');
+    if(!isNaN(dt.getTime())){
+      const mesEl=document.getElementById('f-mes'); if(mesEl)mesEl.value=MESES[dt.getMonth()];
+      const anoEl=document.getElementById('f-ano'); if(anoEl)anoEl.value=String(dt.getFullYear());
+    }
+  }
+  refreshContaSelect(document.getElementById('f-conta').value);
+}
 function refreshContaSelect(sel){
   const s=document.getElementById('f-conta');
-  // Ano do lançamento: primeiro pela data, senão pelo campo Ano
-  const ano=((document.getElementById('f-data')?.value||'').slice(0,4))||(document.getElementById('f-ano')?.value)||'';
+  // Ano do lançamento (o que define a associação à feira): primeiro o campo Ano, senão a data
+  const ano=(document.getElementById('f-ano')?.value)||((document.getElementById('f-data')?.value||'').slice(0,4))||'';
   let html='<option value="">— Sem feira/evento —</option>';
   // Só as feiras/eventos DESTE ano, e cada nome uma só vez
   const vistos=new Set();
@@ -2120,7 +2131,7 @@ function comparAnosDisponiveis(){
 }
 function somaPeriodo(pred){
   let rec=0,desp=0,n=0;
-  txList.forEach(t=>{ if(pred(t)){ if(t.tipo==='Receita')rec+=t.valor; else desp+=t.valor; n++; } });
+  txList.forEach(t=>{ if(pred(t)){ if(t.tipo==='Receita'){rec+=t.valor;n++;} else if(t.tipo==='Despesa'){desp+=t.valor;n++;} } });
   return {rec,desp,saldo:rec-desp,n};
 }
 function compCard(titulo, s){
@@ -2192,7 +2203,7 @@ function duoDados(lado){
   let rotulo='Ano '+ano, pred=t=>String(t.ano)===String(ano)||(t.data||'').slice(0,4)===String(ano);
   if(fid){
     const f=fairs.find(x=>String(x.id)===String(fid));
-    if(f){ rotulo=f.nome+' · '+ano; pred=t=>(t.data||'')>=f.inicio&&(t.data||'')<=f.fim; }
+    if(f){ rotulo=f.nome+' · '+ano; pred=t=>t.conta===f.nome && String(t.ano)===String(ano); }
   }
   const linhas=txList.filter(t=>t.tipo!=='Fundo de Caixa').filter(pred);
   const rec=linhas.filter(t=>t.tipo==='Receita').reduce((s,t)=>s+t.valor,0);
@@ -2290,7 +2301,7 @@ function renderCompararEvento(){
 function compararPorPeriodo(nome, edicoes, box){
   if(!edicoes.length){box.innerHTML='<div class="empty" style="padding:20px"><i class="ti ti-calendar-off"></i>Só há uma edição (ou nenhuma) — nada para comparar</div>';return;}
   const dados=edicoes.map(f=>{
-    const s=somaPeriodo(t=>(t.data||'')>=f.inicio && (t.data||'')<=f.fim);
+    const s=somaPeriodo(t=>t.conta===f.nome && String(t.ano)===String(f.ano));
     const rotulo=(f.ano||((f.inicio||'').slice(0,4)));
     return {rotulo, f, s};
   });
@@ -2302,7 +2313,7 @@ function compararPorPeriodo(nome, edicoes, box){
   box.innerHTML=`
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">${cards}</div>
     <div class="card" style="padding:0;overflow:hidden"><table><thead><tr>${head}</tr></thead><tbody>${rRec}${rDesp}${rSaldo}</tbody></table></div>
-    <div style="font-size:11px;color:var(--text3);margin-top:8px">Cada edição soma os lançamentos entre as datas de início e fim.</div>`;
+    <div style="font-size:11px;color:var(--text3);margin-top:8px">Soma os lançamentos com o Conta/Local desta feira/evento nesse ano (independente da data — inclui despesas antes ou depois, como o terreno).</div>`;
 }
 
 /* ---- DOCUMENTOS ---- */
