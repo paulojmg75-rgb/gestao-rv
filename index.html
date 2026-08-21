@@ -759,7 +759,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   </div>
   <div class="edit-banner" id="editBanner" style="display:none"><i class="ti ti-pencil"></i> Estás a editar um lançamento existente. Corrige o que precisas e guarda.</div>
   <div class="form-row">
-    <div class="form-group"><label class="form-label">Tipo</label><select id="f-tipo" onchange="refreshCatSelect()"><option value="Despesa">Despesa</option><option value="Receita">Receita</option></select></div>
+    <div class="form-group"><label class="form-label">Tipo</label><select id="f-tipo" onchange="refreshCatSelect()"><option value="Receita">Receita</option><option value="Despesa">Despesa</option></select></div>
     <div class="form-group"><label class="form-label">Data</label><input type="date" id="f-data" onchange="onDataChange()"></div>
   </div>
   <div class="form-row">
@@ -1398,7 +1398,7 @@ function openTxModal(){
   document.getElementById('f-ano').value=String(new Date().getFullYear());
   document.getElementById('f-valor').value='';
   document.getElementById('f-notas').value='';
-  document.getElementById('f-tipo').value='Despesa';
+  document.getElementById('f-tipo').value='Receita';
   document.getElementById('f-meio').value='Dinheiro';
   document.getElementById('f-empregado').innerHTML='<option value="">— Nenhum —</option>'+emps.map(e=>`<option value="${e.nome}">${e.nome}</option>`).join('');
   refreshCatSelect();refreshContaSelect();
