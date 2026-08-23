@@ -1399,6 +1399,7 @@ function openTxModal(){
   document.getElementById('f-valor').value='';
   document.getElementById('f-notas').value='';
   document.getElementById('f-tipo').value='Receita';
+  setSplitOff();
   document.getElementById('f-meio').value='Dinheiro';
   document.getElementById('f-empregado').innerHTML='<option value="">— Nenhum —</option>'+emps.map(e=>`<option value="${e.nome}">${e.nome}</option>`).join('');
   refreshCatSelect();refreshContaSelect();
