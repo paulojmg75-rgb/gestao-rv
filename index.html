@@ -93,9 +93,6 @@ body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;backgrou
 .nav-item-settings.active i{background:transparent!important;box-shadow:none!important}
 .nav-divider{width:1px;height:26px;background:var(--side-line);flex-shrink:0;margin:0 2px}
 .topbar-actions-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;margin-left:auto;flex-shrink:0;padding-left:.625rem;border-left:1px solid var(--side-line);height:100%}
-/* Configurações em miniatura, no canto superior direito da zona do logo */
-.nav-settings-logo{position:absolute;top:2px;right:2px;height:24px;width:24px;padding:0!important;justify-content:center;border-radius:7px;z-index:5}
-.nav-settings-logo i{font-size:13px;width:16px;height:16px}
 .topbar-actions{display:flex;align-items:center;gap:6px}
 .topbar-actions .btn{padding:5px 8px;font-size:10px;box-shadow:0 1px 3px rgba(28,25,23,.12);flex:1;justify-content:center}
 .topbar-actions .btn span{display:none}
@@ -436,7 +433,6 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
 <!-- SIDEBAR -->
 <div class="sidebar">
   <div class="logo-area" id="topbarLogoArea" title="Gestão de Negócio">
-    <div class="nav-item nav-item-settings nav-settings-logo" data-page="configuracoes" title="Configurações" style="--ac:var(--accent);--ac-l:var(--accent-l)"><i class="ti ti-settings"></i></div>
     <div id="logoWrap">
       <div class="logo-img-wrap" id="topbarLogoWrap"><span id="topbarLogoPlaceholder" style="font-size:8px;font-weight:700;color:var(--side-text-dim);letter-spacing:.05em">LOGO</span></div>
     </div>
@@ -533,6 +529,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
         <label style="font-size:12px;color:var(--text2);font-weight:500">Ano:</label>
         <select id="dashYear" onchange="renderDashboard()" style="height:34px;padding:6px 10px;font-size:13px;font-weight:600;border-radius:var(--radius);border:.5px solid var(--border2);background:var(--bg2);color:var(--text)"></select>
         <button class="btn" onclick="abrirDocumentos(null)" title="Gerar o Termo de Responsabilidade de uma feira/evento" style="height:34px;padding:6px 10px;font-size:13px;font-weight:600;white-space:nowrap;flex-shrink:0;color:var(--amber);border-color:var(--amber-l);background:linear-gradient(135deg,var(--amber-l),#fff)"><i class="ti ti-file-text"></i> Termo Resp.</button>
+        <button class="btn" onclick="navTo('configuracoes')" title="Configurações" style="height:34px;padding:6px 10px;font-size:13px;font-weight:600;white-space:nowrap;flex-shrink:0;color:#fff;border-color:#9C5F1F;background:linear-gradient(135deg,#C68A42,#9C5F1F)"><i class="ti ti-settings" style="color:#fff"></i> Configurações</button>
       </div>
       <div id="dash-result-mobile" class="only-mobile"></div>
     </div>
@@ -3084,9 +3081,12 @@ let currentUser=null;
    Atualiza estes dois valores sempre que publicares uma versão nova do index.html:
    sobe o número e acrescenta um novo objeto no TOPO de APP_CHANGELOG (fica visível
    no cartão "Versão" em Configurações). */
-const APP_VERSION='3.39';
+const APP_VERSION='3.40';
 const APP_UPDATE_DATE='2026-08-30'; // formato AAAA-MM-DD
 const APP_CHANGELOG=[
+  {v:'3.40',data:'2026-08-30',notas:[
+    'O botão de Configurações saiu de cima do logo e passou para o Dashboard, ao lado do botão "Termo Resp." — com o mesmo tamanho e o destaque dourado de sempre.',
+  ]},
   {v:'3.39',data:'2026-08-30',notas:[
     'Afinações na barra do topo: o botão "Termo Resp." do Dashboard fica sempre numa só linha; o ícone de Configurações ⚙ passou para cima do logo da empresa (canto da zona do logo), em miniatura; e os botões pequenos de ações voltaram às 2 filas de 3 (cloud/Drive/Sincronizar em cima, Exportar/Importar/Terminar sessão em baixo), com a hora de sincronização, a conta e a versão por baixo.',
   ]},
