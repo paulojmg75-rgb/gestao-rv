@@ -386,19 +386,19 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   .sidebar{flex-direction:column!important;align-items:stretch!important;width:236px!important;min-width:236px!important;max-width:236px!important;height:100%!important;border-right:1px solid var(--side-line)!important;border-bottom:none!important;padding:16px 14px!important;gap:0!important;overflow-y:auto!important}
   .logo-area{flex-direction:column!important;padding:0 0 16px!important;border-bottom:1px solid var(--side-line)!important;margin-bottom:12px}
   .logo-img-wrap{width:130px!important;height:54px!important}
-  .nav-section{display:block!important;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--side-text-dim);margin:2px 6px 8px}
+  .nav-section{display:none!important}
   .nav-rows{flex-direction:column!important;min-width:0!important;flex:0 0 auto!important;gap:6px!important}
   .nav-row{flex-direction:column!important;align-items:stretch!important;gap:6px!important}
   .nav-row .nav-item{justify-content:flex-start!important}
   /* Botões coloridos: cada item mantém a sua cor (--ac/--ac-l), com contorno e fundo tintado */
-  .nav-item{height:40px!important;border:1.5px solid var(--ac,var(--border2))!important;background:linear-gradient(135deg,var(--ac-l,#fff) 0%,#fff 85%)!important;border-radius:12px!important;font-size:12.5px!important;padding:8px 12px!important;gap:10px!important;color:var(--ink)!important;font-weight:600!important;box-shadow:0 1px 3px rgba(28,25,23,.08)!important;transition:all .18s cubic-bezier(.4,0,.2,1)!important}
-  .nav-item:hover{box-shadow:0 3px 10px rgba(28,25,23,.16)!important;transform:translateX(2px)}
-  .nav-item i{width:24px!important;height:24px!important;font-size:15px!important;border-radius:7px!important;background:#fff!important;color:var(--ac,var(--nav-ic))!important;box-shadow:0 0 0 1px var(--ac-l,var(--border)) inset}
-  /* Selecionado: preenchido com a cor do próprio botão, texto e ícone brancos */
-  .nav-item.active{background:var(--ac,var(--accent))!important;border-color:var(--ac,var(--accent))!important;color:#fff!important;font-weight:800!important;box-shadow:0 4px 14px -2px var(--ac,var(--accent))!important;transform:translateX(3px)}
-  .nav-item.active i{background:rgba(255,255,255,.22)!important;color:#fff!important;box-shadow:none!important}
+  .nav-item{height:46px!important;border:1.5px solid var(--ac,var(--border2))!important;background:linear-gradient(135deg,var(--ac-l,#fff) 0%,#fff 90%)!important;border-radius:14px!important;font-size:13px!important;padding:10px 13px!important;gap:11px!important;color:var(--ink)!important;font-weight:700!important;letter-spacing:.01em;box-shadow:0 2px 5px rgba(28,25,23,.07)!important;transition:all .18s cubic-bezier(.4,0,.2,1)!important}
+  .nav-item:hover{box-shadow:0 6px 16px -6px var(--ac,rgba(28,25,23,.3))!important;transform:translateX(3px)}
+  .nav-item i{width:29px!important;height:29px!important;font-size:16px!important;border-radius:9px!important;background:var(--ac-l,#fff)!important;color:var(--ac,var(--nav-ic))!important;box-shadow:0 1px 2px rgba(28,25,23,.08)}
+  /* Selecionado: preenchido com a cor do próprio botão + brilho no topo, texto e ícone brancos */
+  .nav-item.active{background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0) 55%),var(--ac,var(--accent))!important;border-color:var(--ac,var(--accent))!important;color:#fff!important;font-weight:800!important;box-shadow:0 7px 18px -5px var(--ac,var(--accent))!important;transform:translateX(4px)}
+  .nav-item.active i{background:rgba(255,255,255,.25)!important;color:#fff!important;box-shadow:none!important}
   .topbar-actions-wrap{margin:auto 0 0!important;border-left:none!important;border-top:1px solid var(--side-line)!important;padding:12px 0 0!important;height:auto!important;align-items:stretch!important;gap:4px!important}
-  .topbar-actions{justify-content:center}
+  .topbar-actions{justify-content:center;width:100%;gap:6px!important}
   .nav-sync-label{text-align:center!important}
   /* Conteúdo: título grande, cartões flutuantes, números fortes */
   .main{width:auto!important}
@@ -3148,9 +3148,12 @@ let currentUser=null;
    Atualiza estes dois valores sempre que publicares uma versão nova do index.html:
    sobe o número e acrescenta um novo objeto no TOPO de APP_CHANGELOG (fica visível
    no cartão "Versão" em Configurações). */
-const APP_VERSION='3.52';
-const APP_UPDATE_DATE='2026-08-30'; // formato AAAA-MM-DD
+const APP_VERSION='3.53';
+const APP_UPDATE_DATE='2026-08-31'; // formato AAAA-MM-DD
 const APP_CHANGELOG=[
+  {v:'3.53',data:'2026-08-31',notas:[
+    'Menu lateral polido: saiu o rótulo "PRINCIPAL", e os botões ficaram maiores e mais bonitos — chip de ícone colorido em cada um, sombras coloridas ao passar o rato, e o selecionado com brilho no topo e sombra da própria cor. Bloco de ações do fundo arrumado a toda a largura.',
+  ]},
   {v:'3.52',data:'2026-08-30',notas:[
     'Visual renovado no PC: o menu passou para uma coluna lateral à esquerda, com botões coloridos (cada área mantém a sua cor) — o selecionado fica preenchido com a cor e texto branco, bem destacado. Título de página maior, cartões "flutuantes" com cantos redondos e sombras suaves, números das métricas grandes e fortes. Alteração puramente visual: toda a lógica e o telemóvel ficam exatamente como estavam.',
   ]},
