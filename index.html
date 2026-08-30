@@ -3081,9 +3081,12 @@ let currentUser=null;
    Atualiza estes dois valores sempre que publicares uma versão nova do index.html:
    sobe o número e acrescenta um novo objeto no TOPO de APP_CHANGELOG (fica visível
    no cartão "Versão" em Configurações). */
-const APP_VERSION='3.40';
+const APP_VERSION='3.41';
 const APP_UPDATE_DATE='2026-08-30'; // formato AAAA-MM-DD
 const APP_CHANGELOG=[
+  {v:'3.41',data:'2026-08-30',notas:[
+    'No Termo de Responsabilidade, o nome da feira/evento aparece agora sublinhado (e ligeiramente destacado) — mais fácil de identificar à primeira vista no documento impresso.',
+  ]},
   {v:'3.40',data:'2026-08-30',notas:[
     'O botão de Configurações saiu de cima do logo e passou para o Dashboard, ao lado do botão "Termo Resp." — com o mesmo tamanho e o destaque dourado de sempre.',
   ]},
@@ -4123,7 +4126,14 @@ function gerarTermo(){
     .replaceAll('{DATA}',new Date().toLocaleDateString('pt-PT'));
   const w=window.open('','_blank');
   if(!w){alert('O browser bloqueou a janela — permite pop-ups para este site.');return;}
-  const linhas=texto.split('\n').map(l=>l.trim()===''?'<div style="height:12px"></div>':`<p>${escHtml(l)}</p>`).join('');
+  // O nome da feira aparece sublinhado (e a negrito leve) no termo, para se destacar.
+  const nomeEsc=escHtml(f.nome);
+  const linhas=texto.split('\n').map(l=>{
+    if(l.trim()==='')return'<div style="height:12px"></div>';
+    let h=escHtml(l);
+    if(nomeEsc)h=h.split(nomeEsc).join('<u style="font-weight:600">'+nomeEsc+'</u>');
+    return`<p>${h}</p>`;
+  }).join('');
   // Cabeçalho com o logo da app (o mesmo da barra superior) + nome do negócio,
   // e rodapé com os dados do declarante — presentes também na impressão/PDF.
   const logo=getLogoSrc();
