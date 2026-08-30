@@ -383,34 +383,34 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
    este bloco inteiro até ao comentário de fecho. */
 @media(min-width:769px){
   .app{flex-direction:row!important}
-  .sidebar{flex-direction:column!important;flex-wrap:nowrap!important;align-items:stretch!important;width:236px!important;min-width:236px!important;max-width:236px!important;height:100%!important;border-right:1px solid var(--side-line)!important;border-bottom:none!important;padding:12px 14px!important;gap:0!important;overflow-y:auto!important}
+  .sidebar{flex-direction:column!important;flex-wrap:nowrap!important;align-items:stretch!important;width:224px!important;min-width:224px!important;max-width:224px!important;height:100%!important;border-right:1px solid var(--side-line)!important;border-bottom:none!important;padding:10px 12px!important;gap:0!important;overflow-y:auto!important;scrollbar-width:thin}
   .logo-area{flex-shrink:0}
   .nav-rows{flex-shrink:0!important}
   .topbar-actions-wrap{flex-shrink:0!important}
   .logo-area{flex-direction:column!important;padding:0 0 10px!important;border-bottom:1px solid var(--side-line)!important;margin-bottom:10px}
-  .logo-img-wrap{width:118px!important;height:48px!important}
+  .logo-img-wrap{width:104px!important;height:42px!important}
   .nav-section{display:none!important}
-  .nav-rows{flex-direction:column!important;min-width:0!important;flex:0 0 auto!important;gap:6px!important}
-  .nav-row{flex-direction:column!important;align-items:stretch!important;gap:6px!important}
+  .nav-rows{flex-direction:column!important;min-width:0!important;flex:0 0 auto!important;gap:5px!important}
+  .nav-row{flex-direction:column!important;align-items:stretch!important;gap:5px!important}
   .nav-row .nav-item{justify-content:flex-start!important}
   /* Botões coloridos: cada item mantém a sua cor (--ac/--ac-l), com contorno e fundo tintado */
   /* Botões "pílula" totalmente preenchidos (estilo da imagem de referência): cor viva
      própria, círculo branco com o ícone à esquerda, texto branco em maiúsculas */
-  .nav-item[data-page="dashboard"]{--ac:#43A047!important}
-  .nav-item[data-page="lancamentos"]{--ac:#26A69A!important}
-  .nav-item[data-page="feiras"]{--ac:#1E88E5!important}
-  .nav-item[data-page="filtros"]{--ac:#FB8C00!important}
-  .nav-item[data-page="relatorio"]{--ac:#7B1FA2!important}
-  .nav-item[data-page="comparar"]{--ac:#E53935!important}
-  .nav-item{height:46px!important;border:none!important;background:var(--ac,var(--accent))!important;border-radius:999px!important;font-size:11.5px!important;text-transform:uppercase;letter-spacing:.05em;padding:7px 16px 7px 7px!important;gap:12px!important;color:#fff!important;font-weight:800!important;box-shadow:0 3px 8px rgba(28,25,23,.22)!important;transition:all .18s cubic-bezier(.4,0,.2,1)!important}
+  .nav-item[data-page="dashboard"]{--ac:#7A9E7E!important}
+  .nav-item[data-page="lancamentos"]{--ac:#7BA8A0!important}
+  .nav-item[data-page="feiras"]{--ac:#7E97B8!important}
+  .nav-item[data-page="filtros"]{--ac:#C4A272!important}
+  .nav-item[data-page="relatorio"]{--ac:#A08CB8!important}
+  .nav-item[data-page="comparar"]{--ac:#C08B84!important}
+  .nav-item{height:38px!important;border:none!important;background:var(--ac,var(--accent))!important;border-radius:999px!important;font-size:10.5px!important;text-transform:uppercase;letter-spacing:.05em;padding:5px 14px 5px 5px!important;gap:10px!important;color:#fff!important;font-weight:800!important;box-shadow:0 2px 6px rgba(28,25,23,.16)!important;transition:all .18s cubic-bezier(.4,0,.2,1)!important}
   .nav-item:hover{box-shadow:0 7px 16px -4px var(--ac,rgba(28,25,23,.4))!important;transform:translateX(3px)}
-  .nav-item i{width:32px!important;height:32px!important;font-size:16px!important;border-radius:50%!important;background:#fff!important;color:var(--ac,var(--nav-ic))!important;box-shadow:0 1px 3px rgba(28,25,23,.15)}
+  .nav-item i{width:28px!important;height:28px!important;font-size:14px!important;border-radius:50%!important;background:#fff!important;color:var(--ac,var(--nav-ic))!important;box-shadow:0 1px 3px rgba(28,25,23,.15)}
   /* Selecionado: anel à volta + cor mais funda + deslocado — inconfundível */
   .nav-item.active{background:linear-gradient(180deg,rgba(0,0,0,.14),rgba(0,0,0,0) 60%),var(--ac,var(--accent))!important;box-shadow:0 0 0 2.5px var(--side),0 0 0 5px var(--ac,var(--accent)),0 8px 18px -4px var(--ac,var(--accent))!important;transform:translateX(5px)}
   .nav-item.active i{transform:scale(1.05)}
-  .topbar-actions-wrap{margin:auto 0 0!important;border-left:none!important;border-top:1px solid var(--side-line)!important;padding:12px 0 0!important;height:auto!important;align-items:stretch!important;gap:4px!important}
+  .topbar-actions-wrap{margin:auto 0 0!important;border-left:none!important;border-top:1px solid var(--side-line)!important;padding:8px 0 0!important;height:auto!important;align-items:stretch!important;gap:3px!important}
   .topbar-actions{justify-content:center;width:100%;gap:6px!important}
-  .topbar-actions .btn{padding:8px 0!important;border-radius:10px!important}
+  .topbar-actions .btn{padding:6px 0!important;border-radius:9px!important}
   .topbar-actions-wrap .nav-sync-label{white-space:normal!important;overflow-wrap:anywhere;line-height:1.45;font-size:8.5px!important;max-width:100%}
   .nav-sync-label{text-align:center!important}
   /* Conteúdo: título grande, cartões flutuantes, números fortes */
@@ -3161,9 +3161,12 @@ let currentUser=null;
    Atualiza estes dois valores sempre que publicares uma versão nova do index.html:
    sobe o número e acrescenta um novo objeto no TOPO de APP_CHANGELOG (fica visível
    no cartão "Versão" em Configurações). */
-const APP_VERSION='3.55';
+const APP_VERSION='3.56';
 const APP_UPDATE_DATE='2026-08-31'; // formato AAAA-MM-DD
 const APP_CHANGELOG=[
+  {v:'3.56',data:'2026-08-31',notas:[
+    'Botões do menu com cores mais neutras (tons suaves em vez de cores vivas) e mais compactos — a coluna do menu passa a caber inteira em ecrãs baixos, sem barra de rolagem.',
+  ]},
   {v:'3.55',data:'2026-08-31',notas:[
     'Corrigido: em ecrãs mais baixos, os botões da Drive/ações saltavam para uma segunda coluna espremida ao lado do menu lateral (com os textos cortados). A coluna do menu deixou de quebrar — se faltar altura, rola por dentro — e ficou ligeiramente mais compacta para caber tudo confortavelmente.',
     'Botões do menu ao estilo "pílula" (como a imagem de referência): totalmente preenchidos com cores vivas, círculo branco com o ícone à esquerda e texto branco em maiúsculas. O selecionado ganha um anel à volta, cor mais funda e fica deslocado — inconfundível.',
