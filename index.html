@@ -3107,9 +3107,12 @@ let currentUser=null;
    Atualiza estes dois valores sempre que publicares uma versão nova do index.html:
    sobe o número e acrescenta um novo objeto no TOPO de APP_CHANGELOG (fica visível
    no cartão "Versão" em Configurações). */
-const APP_VERSION='3.33';
+const APP_VERSION='3.34';
 const APP_UPDATE_DATE='2026-08-30'; // formato AAAA-MM-DD
 const APP_CHANGELOG=[
+  {v:'3.34',data:'2026-08-30',notas:[
+    'O termo de responsabilidade e a folha de impressão dos Filtros passaram a ter cabeçalho com o logo da empresa (o mesmo que está na barra da app) e nome do negócio, e rodapé com os dados do declarante (nome, morada, NIF) e a data — com aspeto de documento oficial, tanto em papel como em PDF.',
+  ]},
   {v:'3.33',data:'2026-08-30',notas:[
     'Destinatários guardados na página Documentos: cria-se uma vez cada entidade (ex.: "Câmara Municipal de Barcelos" + email) e depois é só escolher no menu — o email preenche-se sozinho e o nome pode entrar no texto com a etiqueta {DESTINATARIO}. Também se podem eliminar destinatários guardados.',
   ]},
@@ -4011,8 +4014,11 @@ function imprimirFiltros(){
     `<tr class="tot final"><td colspan="6">${filtros.tipo==='Receita'?'Total de receitas':filtros.tipo==='Despesa'?'Total de despesas':'Resultado'}</td><td class="val ${res>=0?'rec':'desp'}">${fmt(filtros.tipo==='Receita'?rec:filtros.tipo==='Despesa'?desp:res)}</td></tr>`;
   const w=window.open('','_blank');
   if(!w){alert('O browser bloqueou a janela de impressão — permite pop-ups para este site e tenta novamente.');return;}
+  const logoImp=getLogoSrc();
   w.document.write(`<!DOCTYPE html><html lang="pt"><head><meta charset="utf-8"><title>${nomeNegocio} — Impressão de lançamentos</title><style>
     body{font-family:Arial,Helvetica,sans-serif;color:#1a1a1a;margin:24px;font-size:12px}
+    .cab{display:flex;align-items:center;gap:12px;border-bottom:2px solid #333;padding-bottom:8px;margin-bottom:12px}
+    .cab img{max-height:44px;max-width:120px;object-fit:contain}
     h1{font-size:17px;margin:0 0 2px}
     .sub{color:#555;font-size:11px;margin-bottom:4px}
     .crit{font-size:11px;color:#333;margin:8px 0 14px;padding:7px 10px;background:#f4f4f4;border-radius:6px}
@@ -4026,8 +4032,8 @@ function imprimirFiltros(){
     .rodape{margin-top:18px;font-size:9px;color:#777;text-align:right}
     @media print{body{margin:8mm}}
   </style></head><body>
-    <h1>${nomeNegocio}</h1>
-    <div class="sub">Lançamentos — ${data.length} registo(s)</div>
+    <div class="cab">${logoImp?`<img src="${logoImp}" alt="Logo">`:''}<div><h1>${nomeNegocio}</h1>
+    <div class="sub">Lançamentos — ${data.length} registo(s)</div></div></div>
     <div class="crit">${criterios.join(' · ')}</div>
     <table><thead><tr><th>Data</th><th>Categoria</th><th>Feira/Local</th><th>Empregado</th><th>Meio</th><th>Tipo</th><th style="text-align:right">Valor</th></tr></thead>
     <tbody>${linhas}${totais}</tbody></table>
@@ -4237,12 +4243,26 @@ function gerarTermo(){
   const w=window.open('','_blank');
   if(!w){alert('O browser bloqueou a janela — permite pop-ups para este site.');return;}
   const linhas=texto.split('\n').map(l=>l.trim()===''?'<div style="height:12px"></div>':`<p>${escHtml(l)}</p>`).join('');
+  // Cabeçalho com o logo da app (o mesmo da barra superior) + nome do negócio,
+  // e rodapé com os dados do declarante — presentes também na impressão/PDF.
+  const logo=getLogoSrc();
+  const nomeNeg=(document.getElementById('sidebarTitle')?.textContent)||'Gestão de Negócio';
+  const cab=`<div class="cab">${logo?`<img src="${logo}" alt="Logo">`:''}<div class="cab-t"><div class="cab-n">${escHtml(nomeNeg)}</div><div class="cab-s">${escHtml(d.nome||'')}${d.nif?' · NIF '+escHtml(d.nif):''}</div></div></div>`;
+  const rod=`<div class="rod">${escHtml(d.nome||'')}${d.morada?' · '+escHtml(d.morada):''}${d.nif?' · NIF '+escHtml(d.nif):''}<br>Documento gerado em ${new Date().toLocaleDateString('pt-PT')} · gerirmais.com</div>`;
   w.document.write(`<!DOCTYPE html><html lang="pt"><head><meta charset="utf-8"><title>Termo de Responsabilidade — ${escHtml(f.nome)}</title><style>
-    body{font-family:Georgia,'Times New Roman',serif;color:#111;margin:48px auto;max-width:680px;font-size:14px;line-height:1.5}
+    body{font-family:Georgia,'Times New Roman',serif;color:#111;margin:48px auto;max-width:680px;font-size:14px;line-height:1.5;position:relative;padding-bottom:70px;min-height:90vh;box-sizing:border-box}
     p{margin:2px 0}
-    p:first-child{font-size:19px;font-weight:700;text-align:center;margin-bottom:22px}
-    @media print{body{margin:20mm}}
-  </style></head><body>${linhas}</body></html>`);
+    .conteudo p:first-child{font-size:19px;font-weight:700;text-align:center;margin-bottom:22px}
+    .cab{display:flex;align-items:center;gap:14px;border-bottom:2px solid #333;padding-bottom:10px;margin-bottom:26px}
+    .cab img{max-height:56px;max-width:150px;object-fit:contain}
+    .cab-n{font-size:15px;font-weight:700;letter-spacing:.02em}
+    .cab-s{font-size:10px;color:#555;margin-top:2px}
+    .rod{position:absolute;bottom:0;left:0;right:0;border-top:1px solid #999;padding-top:6px;font-size:9px;color:#666;text-align:center;line-height:1.5}
+    @media print{
+      body{margin:14mm;padding-bottom:0;min-height:auto}
+      .rod{position:fixed;bottom:6mm;left:14mm;right:14mm}
+    }
+  </style></head><body>${cab}<div class="conteudo">${linhas}</div>${rod}</body></html>`);
   w.document.close();w.focus();
   setTimeout(()=>{try{w.print();}catch(e){}},400);
 }
