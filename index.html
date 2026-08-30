@@ -54,6 +54,9 @@
 }
 body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg3);color:var(--text);font-size:12px;line-height:1.45;height:100vh;overflow:hidden}
 .app{display:flex;flex-direction:column;height:100vh;width:100vw;overflow:hidden}
+/* Nos telemóveis, 100vh inclui a zona escondida atrás da barra do browser — o fundo das
+   páginas ficava cortado. 100dvh é a altura realmente visível, ajustada em tempo real. */
+@supports(height:100dvh){body{height:100dvh}.app{height:100dvh}}
 
 /* TOPBAR (antiga sidebar) */
 .sidebar{width:100%;display:flex;flex-direction:row;align-items:center;flex-wrap:wrap;background:var(--side);flex-shrink:0;box-shadow:0 1px 8px rgba(0,0,0,.05);border-bottom:1px solid var(--side-line);padding:6px .75rem;gap:4px 6px;overflow:visible;min-height:56px}
@@ -73,6 +76,10 @@ body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;backgrou
 .nav-row{display:flex;align-items:center;gap:4px 6px}
 .nav-row .nav-item{flex:1 1 0;min-width:0;justify-content:center}
 .nav-sync-label{font-size:9px;color:var(--side-text-dim);white-space:nowrap;text-align:center;margin-top:1px}
+/* Trio Ano/Termo/Configurações do Dashboard: grelha de 3 colunas IGUAIS (a largura vem do
+   conteúdo mais largo), sempre na mesma linha — no PC e no telemóvel */
+.hdr-trio{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:8px;align-items:stretch}
+.hdr-btn{height:34px;padding:6px 12px;font-size:13px;width:100%}
 /* NAV — estilo "pill" moderno, em linha */
 .nav-item{display:flex;align-items:center;gap:4px;padding:6px 7px;margin:0;cursor:pointer;font-size:11px;color:var(--ink);border-radius:9px;border:1.5px solid var(--ac,var(--border2));transition:all .18s cubic-bezier(.4,0,.2,1);position:relative;white-space:nowrap;flex-shrink:0;height:34px;background:linear-gradient(135deg,var(--ac-l,#fff) 0%,#fff 80%);box-shadow:0 1px 3px rgba(28,25,23,.1)}
 .nav-dropdown{position:relative;flex-shrink:0}
@@ -271,7 +278,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
 
 /* MOBILE HEADER — escondido por defeito, só aparece em ecrãs pequenos */
 .mobile-header{display:none;align-items:center;gap:10px;padding:10px 14px;background:var(--side);border-bottom:1px solid var(--side-line);position:sticky;top:0;z-index:90}
-.mobile-header-logo{width:76px;height:76px;border-radius:8px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+.mobile-header-logo{width:48px;height:48px;border-radius:8px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
 .mobile-header-logo img{width:100%;height:100%;object-fit:contain}
 .mobile-header-title{min-width:0}
 
@@ -281,6 +288,9 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
 .mobile-more-panel{display:none;position:fixed;left:0;right:0;bottom:0;background:var(--bg2);border-radius:16px 16px 0 0;padding:8px 0 max(16px,env(safe-area-inset-bottom));z-index:160;box-shadow:0 -8px 24px rgba(0,0,0,.15);transform:translateY(100%);transition:transform .25s cubic-bezier(.4,0,.2,1)}
 .mobile-more-panel.open{display:block;transform:translateY(0)}
 .mobile-more-handle{width:36px;height:4px;border-radius:2px;background:var(--border2);margin:6px auto 10px}
+/* Toques no ícone ou no texto contam SEMPRE como toque no botão (sem isto, tocar
+   exatamente em cima do ícone podia não registar — só funcionava tocando no texto) */
+.mobile-nav-item i,.mobile-nav-item span,.mobile-more-item i,.mobile-more-item span,.drive-more-item i,.drive-more-item span{pointer-events:none}
 .mobile-more-item{display:flex;align-items:center;gap:12px;padding:14px 20px;font-size:14px;font-weight:600;color:var(--text);cursor:pointer}
 .mobile-more-item:active{background:var(--bg3)}
 .mobile-more-item i{font-size:19px;color:var(--accent);width:24px;text-align:center}
@@ -288,17 +298,29 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
 .drive-more-item:active{background:var(--bg3)}
 .drive-more-item i{font-size:19px;color:var(--amber);width:24px;text-align:center}
 .mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--side);border-top:1px solid var(--side-line);padding:5px 0;z-index:100;justify-content:space-around}
-.mobile-nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:3px 6px;cursor:pointer;color:var(--side-text-dim);font-size:8px;font-weight:600;border-radius:var(--radius);transition:all .15s;flex:1}
+.mobile-nav-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px 2px;min-height:44px;cursor:pointer;color:var(--side-text-dim);font-size:8px;font-weight:600;border-radius:var(--radius);transition:all .15s;flex:1;min-width:0;white-space:nowrap}
 .mobile-nav-item i{font-size:20px}
 .mobile-nav-item.active{color:var(--accent)}
 
 /* RESPONSIVE */
 @media(max-width:768px){
+  /* Cabeçalho do Dashboard no telemóvel: Ano + Termo + Configurações compactos e a caber */
+  .hdr-btn{height:30px!important;padding:4px 6px!important;font-size:11px!important}
+  .hdr-trio{width:100%;gap:6px}
+  /* A mensagem de estado aparece ACIMA do menu inferior, para nunca o tapar visualmente */
+  #syncStatus{bottom:72px!important}
+  /* Empregados e Viaturas lado a lado nas Configurações, como no PC */
+  .cfg-header-btns{width:100%}
+  .cfg-header-btns .btn{width:auto!important;flex:1}
+
   .sidebar{display:none}
   .mobile-header{display:flex}
   .mobile-nav{display:flex}
-  .main{padding-bottom:120px}
-  .page{padding:.75rem}
+  /* O espaço extra fica na PRÓPRIA página (não no contentor de rolagem, cujo padding
+     inferior alguns browsers móveis ignoram) — garante que se chega sempre ao fim,
+     mesmo com o menu inferior fixo por cima. */
+  .main{padding-bottom:0}
+  .page{padding:.75rem .75rem 150px}
   .only-mobile{display:block}
   #dash-result-mobile{flex:1 1 100%;display:flex;gap:5px;margin-top:2px}
   #dash-result-mobile>.metric{flex:1;margin:0;padding:6px 10px;box-shadow:none;display:flex;flex-direction:column;justify-content:center}
@@ -345,7 +367,9 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   #dash-result-mobile .metric-value{font-size:14px!important}
   #dash-metrics>.metric>.metric-value{font-size:clamp(11px,3.3vw,15px)}
   .filter-grid{grid-template-columns:1fr}
-  .page{padding:.5rem}
+  /* O fundo de 150px é OBRIGATÓRIO: sem ele, o fim das páginas fica debaixo do menu
+     inferior fixo e inacessível (era o que escondia o botão "Apagar todos os dados") */
+  .page{padding:.5rem .5rem 150px}
   .metric-value{font-size:16px}
   .grid2{gap:.5rem}
   .ycal-grid{grid-template-columns:1fr}
@@ -449,8 +473,6 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
       <div class="nav-item active" data-page="dashboard" style="--ac:var(--n1);--ac-l:var(--n1-l)"><i class="ti ti-layout-dashboard"></i> Dashboard</div>
       <div class="nav-item" data-page="lancamentos" style="--ac:var(--n7);--ac-l:var(--n7-l)"><i class="ti ti-receipt"></i> Lançamentos</div>
       <div class="nav-item" data-page="feiras" style="--ac:var(--n2);--ac-l:var(--n2-l)"><i class="ti ti-calendar-event"></i> Feiras/Eventos</div>
-      <div class="nav-item" data-page="empregados" style="--ac:var(--n6);--ac-l:var(--n6-l)"><i class="ti ti-users"></i> Empregados</div>
-      <div class="nav-item" data-page="viaturas" style="--ac:var(--n9);--ac-l:var(--n9-l)"><i class="ti ti-car"></i> Viaturas</div>
       <div class="nav-item" data-page="filtros" style="--ac:var(--n8);--ac-l:var(--n8-l)"><i class="ti ti-filter"></i> Filtros</div>
       <div class="nav-item" data-page="relatorio" style="--ac:var(--n10);--ac-l:var(--n10-l)"><i class="ti ti-chart-bar"></i> Relatório</div>
       <div class="nav-item" data-page="comparar" style="--ac:var(--n3);--ac-l:var(--n3-l)"><i class="ti ti-arrows-left-right"></i> Comparar</div>
@@ -475,21 +497,24 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
 
 <!-- MOBILE HEADER (logo, visível só em ecrãs pequenos) -->
 <header class="mobile-header">
-  <div class="mobile-header-logo" id="mobileLogoWrap">
-    <span id="mobileLogoPlaceholder" style="font-size:8px;font-weight:700;color:var(--side-text-dim);letter-spacing:.05em">LOGO</span>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0">
+    <div class="mobile-header-logo" id="mobileLogoWrap">
+      <span id="mobileLogoPlaceholder" style="font-size:8px;font-weight:700;color:var(--side-text-dim);letter-spacing:.05em">LOGO</span>
+    </div>
+    <div class="logo-title" id="sidebarTitleMobile" style="font-size:10px;max-width:110px;text-align:center">Gestão de Negócio</div>
   </div>
-  <div class="mobile-header-title">
-    <div class="logo-title" id="sidebarTitleMobile" style="font-size:13px">Gestão de Negócio</div>
-    <div class="logo-sub" id="logoSubMobile" style="font-size:9px">Gestão financeira</div>
-    <div id="lastSyncLabelMobile" style="font-size:8px;color:var(--side-text-dim);margin-top:1px">A sincronizar...</div>
-    <div id="contaAtivaLabelMobile" title="Conta com sessão iniciada neste aparelho" style="font-size:8px;color:var(--side-text-dim);font-weight:600"></div>
-    <div id="appVersaoLabelMobile" title="Versão da aplicação" style="font-size:8px;color:var(--side-text-dim)"></div>
-  </div>
-  <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
-    <button class="btn btn-icon" onclick="syncLocalToCloud()" title="Enviar dados locais para a cloud" style="color:var(--teal);border-color:var(--teal-l);background:var(--teal-l);padding:7px 9px"><i class="ti ti-cloud-up"></i></button>
-    <button class="btn btn-icon" onclick="loadAllFromCloud()" title="Sincronizar agora" style="color:var(--blue);border-color:var(--blue-l);background:var(--blue-l);padding:7px 9px"><i class="ti ti-refresh"></i></button>
-    <button class="btn btn-icon" onclick="gdriveConnectInteractive()" title="Ligar Google Drive" style="color:var(--amber);border-color:var(--amber-l);background:var(--amber-l);padding:7px 9px"><i class="ti ti-brand-google-drive"></i></button>
-    <button class="btn btn-icon" onclick="doLogout()" title="Terminar sessão" style="color:var(--red);border-color:var(--red-l);background:var(--red-l);padding:7px 9px"><i class="ti ti-key"></i></button>
+  <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:3px;min-width:0">
+    <div style="display:flex;align-items:center;gap:6px">
+      <button class="btn btn-icon" onclick="syncLocalToCloud()" title="Enviar dados locais para a cloud" style="color:var(--teal);border-color:var(--teal-l);background:var(--teal-l);padding:5px 7px"><i class="ti ti-cloud-up" style="font-size:13px"></i></button>
+      <button class="btn btn-icon" onclick="loadAllFromCloud()" title="Sincronizar agora" style="color:var(--blue);border-color:var(--blue-l);background:var(--blue-l);padding:5px 7px"><i class="ti ti-refresh" style="font-size:13px"></i></button>
+      <button class="btn btn-icon" onclick="gdriveConnectInteractive()" title="Ligar Google Drive" style="color:var(--amber);border-color:var(--amber-l);background:var(--amber-l);padding:5px 7px"><i class="ti ti-brand-google-drive" style="font-size:13px"></i></button>
+      <button class="btn btn-icon" onclick="doLogout()" title="Terminar sessão" style="color:var(--red);border-color:var(--red-l);background:var(--red-l);padding:5px 7px"><i class="ti ti-key" style="font-size:13px"></i></button>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;line-height:1.35">
+      <div id="lastSyncLabelMobile" style="font-size:8px;color:var(--side-text-dim)">A sincronizar...</div>
+      <div id="contaAtivaLabelMobile" title="Conta com sessão iniciada neste aparelho" style="font-size:8px;color:var(--side-text-dim);font-weight:600"></div>
+      <div id="appVersaoLabelMobile" title="Versão da aplicação" style="font-size:8px;color:var(--side-text-dim)"></div>
+    </div>
   </div>
 </header>
 
@@ -499,23 +524,9 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   <div class="mobile-nav-item" data-page="lancamentos"><i class="ti ti-receipt"></i><span>Lançar</span></div>
   <div class="mobile-nav-item" data-page="feiras"><i class="ti ti-calendar-event"></i><span>Feiras/Ev.</span></div>
   <div class="mobile-nav-item" data-page="filtros"><i class="ti ti-filter"></i><span>Filtros</span></div>
-  <div class="mobile-nav-item" id="mobileMoreBtn" onclick="toggleMobileMore()"><i class="ti ti-dots"></i><span>Mais</span></div>
+  <div class="mobile-nav-item" data-page="relatorio"><i class="ti ti-chart-bar"></i><span>Relatório</span></div>
+  <div class="mobile-nav-item" data-page="comparar"><i class="ti ti-arrows-left-right"></i><span>Comparar</span></div>
 </nav>
-
-<!-- MOBILE "MAIS" PANEL -->
-<div class="mobile-more-overlay" id="mobileMoreOverlay" onclick="toggleMobileMore()"></div>
-<div class="mobile-more-panel" id="mobileMorePanel">
-  <div class="mobile-more-handle"></div>
-  <div class="mobile-more-item" data-page="empregados"><i class="ti ti-users"></i><span>Empregados</span></div>
-  <div class="mobile-more-item" data-page="viaturas"><i class="ti ti-car"></i><span>Viaturas</span></div>
-  <div class="mobile-more-item" data-page="relatorio"><i class="ti ti-chart-bar"></i><span>Relatório</span></div>
-  <div class="mobile-more-item" data-page="comparar"><i class="ti ti-arrows-left-right"></i><span>Comparar</span></div>
-  <div class="mobile-more-item" data-page="configuracoes"><i class="ti ti-settings"></i><span>Configurações</span></div>
-  <div class="drive-more-item" onclick="closeMobileMore();abrirDocumentos(null)"><i class="ti ti-file-text"></i><span>Termo de Responsabilidade</span></div>
-  <div class="drive-more-item" onclick="closeMobileMore();syncLocalToCloud()"><i class="ti ti-cloud-up"></i><span>Enviar dados locais → cloud</span></div>
-  <div class="drive-more-item" onclick="closeMobileMore();gdriveConnectInteractive()"><i class="ti ti-brand-google-drive"></i><span>Ligar Google Drive</span></div>
-  <div class="drive-more-item" onclick="closeMobileMore();loadAllFromCloud()"><i class="ti ti-refresh"></i><span>Sincronizar agora</span></div>
-</div>
 
 <!-- MAIN -->
 <div class="main">
@@ -525,11 +536,12 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   <div class="page-header">
     <div><h1>Dashboard</h1><p id="dash-sub">Resumo financeiro</p></div>
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end">
-      <div style="display:flex;align-items:center;gap:8px">
-        <label style="font-size:12px;color:var(--text2);font-weight:500">Ano:</label>
-        <select id="dashYear" onchange="renderDashboard()" style="height:34px;padding:6px 10px;font-size:13px;font-weight:600;border-radius:var(--radius);border:.5px solid var(--border2);background:var(--bg2);color:var(--text)"></select>
-        <button class="btn" onclick="abrirDocumentos(null)" title="Gerar o Termo de Responsabilidade de uma feira/evento" style="height:34px;padding:6px 10px;font-size:13px;font-weight:600;white-space:nowrap;flex-shrink:0;color:var(--amber);border-color:var(--amber-l);background:linear-gradient(135deg,var(--amber-l),#fff)"><i class="ti ti-file-text"></i> Termo Resp.</button>
-        <button class="btn" onclick="navTo('configuracoes')" title="Configurações" style="height:34px;padding:6px 10px;font-size:13px;font-weight:600;white-space:nowrap;flex-shrink:0;color:#fff;border-color:#9C5F1F;background:linear-gradient(135deg,#C68A42,#9C5F1F)"><i class="ti ti-settings" style="color:#fff"></i> Configurações</button>
+      <!-- Ano + Termo Resp. + Configurações: sempre na MESMA linha, os 3 com larguras
+           iguais (definidas pelo conteúdo mais largo), no PC e no telemóvel -->
+      <div class="hdr-trio">
+        <select id="dashYear" onchange="renderDashboard()" title="Ano" class="hdr-btn" style="font-weight:600;border-radius:var(--radius);border:.5px solid var(--border2);background:var(--bg2);color:var(--text);text-align:center"></select>
+        <button class="btn hdr-btn" onclick="abrirDocumentos(null)" title="Termo de Responsabilidade / Contactos das Feiras" style="font-weight:600;white-space:nowrap;justify-content:center;color:var(--amber);border-color:var(--amber-l);background:linear-gradient(135deg,var(--amber-l),#fff)"><i class="ti ti-file-text"></i> Termo / Contactos</button>
+        <button class="btn hdr-btn" onclick="navTo('configuracoes')" title="Configurações" style="font-weight:600;white-space:nowrap;justify-content:center;color:#fff;border-color:#9C5F1F;background:linear-gradient(135deg,#C68A42,#9C5F1F)"><i class="ti ti-settings" style="color:#fff"></i> Configurações</button>
       </div>
       <div id="dash-result-mobile" class="only-mobile"></div>
     </div>
@@ -663,6 +675,10 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
 <div class="page" id="page-configuracoes">
   <div class="page-header">
     <div><h1>Configurações</h1><p>Gere todas as listas usadas nos lançamentos</p></div>
+    <div class="cfg-header-btns" style="display:flex;gap:6px;flex-wrap:nowrap">
+      <button class="btn btn-sm" onclick="navTo('empregados')" style="color:var(--n6);border-color:var(--n6-l);background:linear-gradient(135deg,var(--n6-l),#fff)"><i class="ti ti-users"></i> Empregados</button>
+      <button class="btn btn-sm" onclick="navTo('viaturas')" style="color:var(--n9);border-color:var(--n9-l);background:linear-gradient(135deg,var(--n9-l),#fff)"><i class="ti ti-car"></i> Viaturas</button>
+    </div>
   </div>
   <div style="display:flex;gap:.75rem;align-items:flex-start">
     <!-- COLUNA 1: Tipos de Receita -->
@@ -837,7 +853,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
 <!-- TERMO DE RESPONSABILIDADE -->
 <div class="page" id="page-documentos">
   <div class="page-header">
-    <div><h1>Termo de Responsabilidade</h1><p>Gera o termo já preenchido com a feira/evento escolhida — imprime ou guarda em PDF e envia pelo teu email</p></div>
+    <div><h1>Termo de Responsabilidade / Contactos das Feiras</h1><p>Gera o termo já preenchido com a feira/evento escolhida — imprime ou guarda em PDF e envia pelo teu email</p></div>
     <div class="form-group" style="margin:0;min-width:220px"><label class="form-label">Feira / Evento</label>
       <select id="doc-feira" onchange="docFeiraSel=parseInt(this.value)||null"></select>
     </div>
@@ -1464,6 +1480,7 @@ document.querySelectorAll('.nav-item,.mobile-nav-item,.mobile-more-item').forEac
 /* Painel "Mais" da navegação móvel */
 function toggleMobileMore(){
   const panel=document.getElementById('mobileMorePanel'),overlay=document.getElementById('mobileMoreOverlay');
+  if(!panel||!overlay)return;
   const isOpen=panel.classList.contains('open');
   if(isOpen){closeMobileMore();}
   else{panel.classList.add('open');overlay.classList.add('open');}
@@ -2851,7 +2868,10 @@ function loadFromLocal(){
 
 function showSyncStatus(msg,ok=true){
   let el=document.getElementById('syncStatus');
-  if(!el){el=document.createElement('div');el.id='syncStatus';el.style.cssText='position:fixed;bottom:16px;right:16px;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:500;z-index:9999;transition:opacity .5s;box-shadow:0 2px 8px rgba(0,0,0,.15)';document.body.appendChild(el);}
+  // pointer-events:none é ESSENCIAL: sem isso, a mensagem (mesmo já invisível, porque o
+  // desaparecer é só opacidade) ficava a bloquear os toques por baixo dela — no telemóvel
+  // tapava os botões Feiras/Filtros/Mais do menu inferior, que pareciam "não funcionar".
+  if(!el){el=document.createElement('div');el.id='syncStatus';el.style.cssText='position:fixed;bottom:16px;right:16px;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:500;z-index:9999;transition:opacity .5s;box-shadow:0 2px 8px rgba(0,0,0,.15);pointer-events:none';document.body.appendChild(el);}
   el.style.background=ok?'#E1F5EE':'#FCEBEB';
   el.style.color=ok?'#0F6E56':'#A32D2D';
   el.style.opacity='1';
@@ -3090,9 +3110,38 @@ let currentUser=null;
    Atualiza estes dois valores sempre que publicares uma versão nova do index.html:
    sobe o número e acrescenta um novo objeto no TOPO de APP_CHANGELOG (fica visível
    no cartão "Versão" em Configurações). */
-const APP_VERSION='3.42';
+const APP_VERSION='3.51';
 const APP_UPDATE_DATE='2026-08-30'; // formato AAAA-MM-DD
 const APP_CHANGELOG=[
+  {v:'3.51',data:'2026-08-30',notas:[
+    'A página do termo passou a chamar-se "Termo de Responsabilidade / Contactos das Feiras" e o botão do Dashboard "Termo / Contactos" (PC e telemóvel). Nos contactos das feiras, cada linha ganhou um botão "Guardar" que grava o email e o telemóvel de uma vez, com confirmação clara — o guardar automático ao sair do campo também se mantém.',
+  ]},
+  {v:'3.50',data:'2026-08-30',notas:[
+    'Corrigido (agora a sério): no telemóvel, o fim das páginas ficava escondido debaixo do menu inferior — era por isso que o botão "Apagar todos os dados" das Configurações não aparecia. Uma regra antiga dos ecrãs pequenos anulava o espaço de rolagem do fundo; foi corrigida e validada num browser real com ecrã de telemóvel.',
+  ]},
+  {v:'3.49',data:'2026-08-30',notas:[
+    'Menu de baixo do telemóvel simplificado: o botão "Mais" desapareceu — tudo o que lá estava já tem acesso direto (Configurações e Termo no Dashboard; cloud/Drive/Sincronizar no cabeçalho) — e no seu lugar entraram o Relatório e o Comparar, que eram os únicos sem acesso. A barra fica com 6 botões diretos: Início, Lançar, Feiras/Ev., Filtros, Relatório e Comparar.',
+  ]},
+  {v:'3.48',data:'2026-08-30',notas:[
+    'Corrigido: no telemóvel, algumas páginas (ex.: Configurações) não deixavam ver o conteúdo até ao fim — o fundo ficava cortado pela barra do browser e pelo menu inferior. A app passou a usar a altura realmente visível do ecrã e a reservar espaço de rolagem no fundo de todas as páginas, por isso agora chega-se sempre ao final.',
+  ]},
+  {v:'3.47',data:'2026-08-30',notas:[
+    'No telemóvel, os botões Empregados e Viaturas (topo das Configurações) ficam agora lado a lado, com larguras iguais — como no PC, em vez de empilhados um por baixo do outro.',
+  ]},
+  {v:'3.46',data:'2026-08-30',notas:[
+    'Encontrada e corrigida a verdadeira causa dos toques "mortos" no menu de baixo do telemóvel (Feiras, Filtros, Mais): a mensagem verde de estado (ex.: "lançamentos carregados!") ficava invisível mas continuava por cima desses botões a bloquear os toques. Agora a mensagem nunca bloqueia toques e, no telemóvel, aparece acima do menu inferior. O botão flutuante de ajuda também passou a nascer acima do menu.',
+  ]},
+  {v:'3.45',data:'2026-08-30',notas:[
+    'Cabeçalho do telemóvel reorganizado: logo mais pequeno com o nome do negócio por baixo; botões (cloud/Sincronizar/Drive/sessão) ligeiramente mais pequenos; e a hora de sincronização, a conta e a versão passaram para debaixo dos botões.',
+    'Corrigido o menu de baixo do telemóvel: tocar em cima do ícone às vezes não fazia nada (só o texto funcionava) — agora qualquer toque no botão conta, e a área de toque de cada botão ficou maior.',
+  ]},
+  {v:'3.44',data:'2026-08-30',notas:[
+    'Os botões Ano, Termo Resp. e Configurações do Dashboard ficam agora sempre os 3 na mesma linha, com larguras exatamente iguais (ajustadas ao conteúdo) — tanto no PC como no telemóvel, onde encolhem em conjunto para caberem sem cortes.',
+  ]},
+  {v:'3.43',data:'2026-08-30',notas:[
+    'Menu principal mais limpo: Empregados e Viaturas saíram da barra do topo (e do painel "Mais" do telemóvel) e passaram para dentro de Configurações, com dois botões no topo dessa página — afinal são áreas de configuração; para consultar despesas por empregado ou viatura usam-se os Filtros. As páginas em si ficaram exatamente iguais.',
+    'No telemóvel, os botões Ano/Termo Resp./Configurações do Dashboard ficaram mais compactos e passam para uma segunda linha se não couberem — deixam de ficar espremidos ou cortados.',
+  ]},
   {v:'3.42',data:'2026-08-30',notas:[
     'Por segurança, o botão "Apagar todos os dados" saiu do topo das Configurações e passou para o FIM da página, numa "Zona de perigo" própria com aviso claro — agora que o botão de Configurações está mais à mão no Dashboard, deixa de haver risco de tocar no apagar sem querer.',
   ]},
@@ -4101,11 +4150,12 @@ function renderContactos(){
   area.innerHTML=nomes.map(nome=>{
     const c=m[nome]||{};
     const enc=encodeURIComponent(nome);
-    return`<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg);border:.5px solid var(--border);border-radius:var(--radius);margin-bottom:6px;flex-wrap:wrap">
+    return`<div class="contacto-feira-linha" style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg);border:.5px solid var(--border);border-radius:var(--radius);margin-bottom:6px;flex-wrap:wrap">
       <i class="ti ti-building-carousel" style="color:var(--text3)"></i>
       <div style="flex:1 1 150px;min-width:120px;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(nome)}">${escHtml(nome)}</div>
-      <input type="email" placeholder="email da entidade" value="${escHtml(c.email||'')}" onchange="guardarContactoFeira('${enc}','email',this.value)" style="flex:1 1 170px;min-width:140px;font-size:11px;padding:5px 8px;border-radius:var(--radius);border:.5px solid var(--border2)">
-      <input type="tel" placeholder="telemóvel" value="${escHtml(c.tel||'')}" onchange="guardarContactoFeira('${enc}','tel',this.value)" style="flex:0 1 110px;min-width:90px;font-size:11px;padding:5px 8px;border-radius:var(--radius);border:.5px solid var(--border2)">
+      <input type="email" class="cf-email" placeholder="email da entidade" value="${escHtml(c.email||'')}" onchange="guardarContactoFeira('${enc}','email',this.value)" style="flex:1 1 170px;min-width:140px;font-size:11px;padding:5px 8px;border-radius:var(--radius);border:.5px solid var(--border2)">
+      <input type="tel" class="cf-tel" placeholder="telemóvel" value="${escHtml(c.tel||'')}" onchange="guardarContactoFeira('${enc}','tel',this.value)" style="flex:0 1 110px;min-width:90px;font-size:11px;padding:5px 8px;border-radius:var(--radius);border:.5px solid var(--border2)">
+      <button class="btn btn-sm" title="Guardar email e telemóvel desta feira" onclick="guardarContactoLinha('${enc}',this)" style="color:var(--accent);background:var(--accent-l);border-color:var(--accent-l)"><i class="ti ti-device-floppy" style="font-size:12px"></i> Guardar</button>
       <button class="btn btn-sm btn-icon" title="Escrever email" onclick="emailContactoFeira('${enc}')" style="color:var(--teal);background:var(--teal-l);border-color:var(--teal-l)"><i class="ti ti-mail-forward" style="font-size:12px"></i></button>
     </div>`;
   }).join('');
@@ -4117,6 +4167,18 @@ function guardarContactoFeira(nomeEnc,campo,valor){
   m[nome][campo]=String(valor||'').trim();
   saveDocContactosFeira(m);
   showSyncStatus('Contacto de "'+nome+'" guardado!',true);
+}
+/* Botão "Guardar" da linha: grava o email E o telemóvel de uma vez (além do guardar
+   automático ao sair de cada campo, que se mantém) — dá a confirmação clara que faltava. */
+function guardarContactoLinha(nomeEnc,btn){
+  const nome=decodeURIComponent(nomeEnc);
+  const linha=btn.closest('.contacto-feira-linha');
+  const m=docContactosFeira();
+  m[nome]=m[nome]||{};
+  m[nome].email=(linha.querySelector('.cf-email').value||'').trim();
+  m[nome].tel=(linha.querySelector('.cf-tel').value||'').trim();
+  saveDocContactosFeira(m);
+  showSyncStatus('Contacto de "'+nome+'" guardado! ✓',true);
 }
 function emailContactoFeira(nomeEnc){
   const nome=decodeURIComponent(nomeEnc);
@@ -4787,7 +4849,7 @@ function initAjudaBtn(){
   let salvo=null;
   try{ salvo=JSON.parse(localStorage.getItem('ajudaBtnPos')||'null'); }catch(e){}
   if(salvo&&typeof salvo.x==='number'&&typeof salvo.y==='number'){ posicionarAjudaBtn(salvo.x,salvo.y); }
-  else{ posicionarAjudaBtn(window.innerWidth-66,window.innerHeight-96); }
+  else{ posicionarAjudaBtn(window.innerWidth-66,window.innerHeight-150); } // acima do menu inferior do telemóvel
   let dragging=false,moveu=false,offX=0,offY=0,startX=0,startY=0;
   btn.addEventListener('pointerdown',e=>{
     dragging=true; moveu=false;
