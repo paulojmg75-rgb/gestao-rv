@@ -69,12 +69,12 @@ body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;backgrou
 .logo-area:hover~.logo-tools,.logo-tools:hover{display:flex;align-items:center;padding:0 .625rem;height:100%}
 #logoInput{display:none}
 .nav-section{display:none}
-.nav-rows{display:flex;flex-direction:column;gap:4px;flex:1;min-width:280px}
+.nav-rows{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
 .nav-row{display:flex;align-items:center;gap:4px 6px}
 .nav-row .nav-item{flex:1 1 0;min-width:0;justify-content:center}
 .nav-sync-label{font-size:9px;color:var(--side-text-dim);white-space:nowrap;text-align:center;margin-top:1px}
 /* NAV — estilo "pill" moderno, em linha */
-.nav-item{display:flex;align-items:center;gap:5px;padding:6px 9px;margin:0;cursor:pointer;font-size:11.5px;color:var(--ink);border-radius:9px;border:1.5px solid var(--ac,var(--border2));transition:all .18s cubic-bezier(.4,0,.2,1);position:relative;white-space:nowrap;flex-shrink:0;height:34px;background:linear-gradient(135deg,var(--ac-l,#fff) 0%,#fff 80%);box-shadow:0 1px 3px rgba(28,25,23,.1)}
+.nav-item{display:flex;align-items:center;gap:4px;padding:6px 7px;margin:0;cursor:pointer;font-size:11px;color:var(--ink);border-radius:9px;border:1.5px solid var(--ac,var(--border2));transition:all .18s cubic-bezier(.4,0,.2,1);position:relative;white-space:nowrap;flex-shrink:0;height:34px;background:linear-gradient(135deg,var(--ac-l,#fff) 0%,#fff 80%);box-shadow:0 1px 3px rgba(28,25,23,.1)}
 .nav-dropdown{position:relative;flex-shrink:0}
 .nav-drop-toggle{display:flex;align-items:center;gap:5px;padding:6px 9px;cursor:pointer;font-size:11.5px;color:var(--side-text);border-radius:9px;border:1px solid transparent;white-space:nowrap;height:34px;transition:all .18s}
 .nav-drop-toggle:hover{background:var(--bg2)}
@@ -96,8 +96,6 @@ body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;backgrou
 .topbar-actions{display:flex;align-items:center;gap:6px}
 .topbar-actions .btn{padding:5px 8px;font-size:10px;box-shadow:0 1px 3px rgba(28,25,23,.12);flex:1;justify-content:center}
 .topbar-actions .btn span{display:none}
-/* O botão de Configurações estica ao lado das 2 linhas de ações, com a mesma altura do bloco */
-.topbar-actions-wrap .nav-item-settings{height:auto}
 
 /* MAIN */
 .main{flex:1;overflow-y:auto;background:var(--bg3);min-width:0;width:100%}
@@ -452,8 +450,6 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
       <div class="nav-item" data-page="lancamentos" style="--ac:var(--n7);--ac-l:var(--n7-l)"><i class="ti ti-receipt"></i> Lançamentos</div>
       <div class="nav-item" data-page="feiras" style="--ac:var(--n2);--ac-l:var(--n2-l)"><i class="ti ti-calendar-event"></i> Feiras/Eventos</div>
       <div class="nav-item" data-page="empregados" style="--ac:var(--n6);--ac-l:var(--n6-l)"><i class="ti ti-users"></i> Empregados</div>
-    </div>
-    <div class="nav-row">
       <div class="nav-item" data-page="viaturas" style="--ac:var(--n9);--ac-l:var(--n9-l)"><i class="ti ti-car"></i> Viaturas</div>
       <div class="nav-item" data-page="filtros" style="--ac:var(--n8);--ac-l:var(--n8-l)"><i class="ti ti-filter"></i> Filtros</div>
       <div class="nav-item" data-page="relatorio" style="--ac:var(--n10);--ac-l:var(--n10-l)"><i class="ti ti-chart-bar"></i> Relatório</div>
@@ -461,23 +457,18 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
     </div>
   </div>
   <div class="topbar-actions-wrap">
-    <div style="display:flex;align-items:stretch;gap:6px">
+    <div class="topbar-actions">
       <div class="nav-item nav-item-settings" data-page="configuracoes" title="Configurações" style="--ac:var(--accent);--ac-l:var(--accent-l)"><i class="ti ti-settings"></i></div>
-      <div style="display:flex;flex-direction:column;gap:4px">
-        <div class="topbar-actions">
-          <button class="btn btn-icon" onclick="syncLocalToCloud()" title="Enviar dados locais para a cloud (igualar PC e telemóvel)" style="color:var(--n7);border-color:var(--n7-l);background:linear-gradient(135deg,var(--n7-l),#fff)"><i class="ti ti-cloud-up"></i></button>
-          <button class="btn btn-icon" onclick="gdriveAuth(()=>showSyncStatus('Google Drive ligado! ✓',true))" title="Ligar Google Drive" style="color:var(--n5);border-color:var(--n5-l);background:linear-gradient(135deg,var(--n5-l),#fff)"><i class="ti ti-brand-google-drive"></i></button>
-          <button class="btn btn-icon" onclick="loadAllFromCloud()" title="Sincronizar agora" style="color:var(--n2);border-color:var(--n2-l);background:linear-gradient(135deg,var(--n2-l),#fff)"><i class="ti ti-refresh"></i></button>
-        </div>
-        <div class="topbar-actions">
-          <button class="btn btn-icon" onclick="exportarExcel()" title="Exportar Excel" style="color:var(--n1);border-color:var(--n1-l);background:linear-gradient(135deg,var(--n1-l),#fff)"><i class="ti ti-download"></i></button>
-          <label class="btn btn-icon" title="Importar Excel" style="cursor:pointer;color:var(--n9);border-color:var(--n9-l);background:linear-gradient(135deg,var(--n9-l),#fff)"><i class="ti ti-upload"></i><input type="file" accept=".xlsx,.xls" onchange="importarExcel(event)" style="display:none"></label>
-          <button class="btn btn-icon" onclick="doLogout()" title="Terminar sessão" style="color:var(--n6);border-color:var(--n6-l);background:linear-gradient(135deg,var(--n6-l),#fff)"><i class="ti ti-key"></i></button>
-        </div>
-      </div>
+      <button class="btn btn-icon" onclick="syncLocalToCloud()" title="Enviar dados locais para a cloud (igualar PC e telemóvel)" style="color:var(--n7);border-color:var(--n7-l);background:linear-gradient(135deg,var(--n7-l),#fff)"><i class="ti ti-cloud-up"></i></button>
+      <button class="btn btn-icon" onclick="gdriveAuth(()=>showSyncStatus('Google Drive ligado! ✓',true))" title="Ligar Google Drive" style="color:var(--n5);border-color:var(--n5-l);background:linear-gradient(135deg,var(--n5-l),#fff)"><i class="ti ti-brand-google-drive"></i></button>
+      <button class="btn btn-icon" onclick="loadAllFromCloud()" title="Sincronizar agora" style="color:var(--n2);border-color:var(--n2-l);background:linear-gradient(135deg,var(--n2-l),#fff)"><i class="ti ti-refresh"></i></button>
+      <button class="btn btn-icon" onclick="exportarExcel()" title="Exportar Excel" style="color:var(--n1);border-color:var(--n1-l);background:linear-gradient(135deg,var(--n1-l),#fff)"><i class="ti ti-download"></i></button>
+      <label class="btn btn-icon" title="Importar Excel" style="cursor:pointer;color:var(--n9);border-color:var(--n9-l);background:linear-gradient(135deg,var(--n9-l),#fff)"><i class="ti ti-upload"></i><input type="file" accept=".xlsx,.xls" onchange="importarExcel(event)" style="display:none"></label>
+      <button class="btn btn-icon" onclick="doLogout()" title="Terminar sessão" style="color:var(--n6);border-color:var(--n6-l);background:linear-gradient(135deg,var(--n6-l),#fff)"><i class="ti ti-key"></i></button>
     </div>
     <div class="nav-sync-label" id="lastSyncLabel">A sincronizar...</div>
     <div class="nav-sync-label" id="contaAtivaLabel" title="Conta com sessão iniciada neste aparelho" style="font-weight:600"></div>
+    <div class="nav-sync-label" id="appVersaoLabel" title="Versão da aplicação"></div>
   </div>
 </div>
 
@@ -491,6 +482,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
     <div class="logo-sub" id="logoSubMobile" style="font-size:9px">Gestão financeira</div>
     <div id="lastSyncLabelMobile" style="font-size:8px;color:var(--side-text-dim);margin-top:1px">A sincronizar...</div>
     <div id="contaAtivaLabelMobile" title="Conta com sessão iniciada neste aparelho" style="font-size:8px;color:var(--side-text-dim);font-weight:600"></div>
+    <div id="appVersaoLabelMobile" title="Versão da aplicação" style="font-size:8px;color:var(--side-text-dim)"></div>
   </div>
   <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
     <button class="btn btn-icon" onclick="syncLocalToCloud()" title="Enviar dados locais para a cloud" style="color:var(--teal);border-color:var(--teal-l);background:var(--teal-l);padding:7px 9px"><i class="ti ti-cloud-up"></i></button>
@@ -534,8 +526,8 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end">
       <div style="display:flex;align-items:center;gap:8px">
         <label style="font-size:12px;color:var(--text2);font-weight:500">Ano:</label>
-        <select id="dashYear" onchange="renderDashboard()" style="padding:6px 10px;font-size:13px;font-weight:600;border-radius:var(--radius);border:.5px solid var(--border2);background:var(--bg2);color:var(--text)"></select>
-        <button class="btn" onclick="abrirDocumentos(null)" title="Gerar o Termo de Responsabilidade de uma feira/evento" style="padding:6px 10px;font-size:13px;font-weight:600;color:var(--amber);border-color:var(--amber-l);background:linear-gradient(135deg,var(--amber-l),#fff)"><i class="ti ti-file-text"></i> Termo Resp.</button>
+        <select id="dashYear" onchange="renderDashboard()" style="height:34px;padding:6px 10px;font-size:13px;font-weight:600;border-radius:var(--radius);border:.5px solid var(--border2);background:var(--bg2);color:var(--text)"></select>
+        <button class="btn" onclick="abrirDocumentos(null)" title="Gerar o Termo de Responsabilidade de uma feira/evento" style="height:34px;padding:6px 10px;font-size:13px;font-weight:600;color:var(--amber);border-color:var(--amber-l);background:linear-gradient(135deg,var(--amber-l),#fff)"><i class="ti ti-file-text"></i> Termo Resp.</button>
       </div>
       <div id="dash-result-mobile" class="only-mobile"></div>
     </div>
@@ -869,12 +861,9 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   </div>
 
   <div class="card" style="padding:1rem">
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:4px">
-      <span class="card-title" style="margin-bottom:0"><i class="ti ti-mail"></i> Os meus contactos (câmaras, associações...)</span>
-      <button class="btn btn-sm" onclick="novoContacto()"><i class="ti ti-plus"></i> Novo contacto</button>
-    </div>
-    <div style="font-size:10px;color:var(--text3);margin-bottom:10px">Guarda aqui os emails das entidades — ✉ abre o teu programa de email já com o destinatário e o assunto preenchidos; anexas o termo (e o que precisares) e envias.</div>
-    <div id="doc-contactos-lista"><div class="empty">Sem contactos guardados</div></div>
+    <div class="card-title"><i class="ti ti-mail"></i> Contactos das feiras/eventos</div>
+    <div style="font-size:10px;color:var(--text3);margin-bottom:10px">A lista vem das feiras/eventos que já criaste (cada feira aparece uma vez, seja de que ano for). Preenche o email e o telemóvel de cada uma — ficam guardados sozinhos. O ✉ abre o teu email já com o destinatário e o assunto preenchidos; o telemóvel é só para consulta.</div>
+    <div id="doc-contactos-lista"><div class="empty">Ainda não há feiras/eventos criados</div></div>
   </div>
 </div>
 
@@ -3090,9 +3079,18 @@ let currentUser=null;
    Atualiza estes dois valores sempre que publicares uma versão nova do index.html:
    sobe o número e acrescenta um novo objeto no TOPO de APP_CHANGELOG (fica visível
    no cartão "Versão" em Configurações). */
-const APP_VERSION='3.35';
+const APP_VERSION='3.38';
 const APP_UPDATE_DATE='2026-08-30'; // formato AAAA-MM-DD
 const APP_CHANGELOG=[
+  {v:'3.38',data:'2026-08-30',notas:[
+    'O número da versão da app passou a estar sempre visível por baixo dos botões de ações, junto à hora de sincronização e à conta ativa (no telemóvel, no cabeçalho) — assim confirma-se num relance se cada aparelho já tem a atualização mais recente, sem ir a Configurações.',
+  ]},
+  {v:'3.37',data:'2026-08-30',notas:[
+    'Contactos do Termo de Responsabilidade renovados: a lista passa a vir automaticamente das feiras/eventos já criados (cada feira aparece uma só vez, seja de que ano for) — só precisas de preencher o email e o telemóvel de cada uma, que ficam guardados sozinhos. O ✉ abre o teu email já endereçado com o assunto preenchido; o telemóvel fica guardado para consulta. O botão "Termo Resp." do Dashboard ficou com a altura exatamente igual à do seletor de ano.',
+  ]},
+  {v:'3.36',data:'2026-08-30',notas:[
+    'Barra do topo reorganizada numa só linha: os 8 botões do menu ficam todos em fila, ligeiramente mais compactos, e os botões de ações (Configurações, cloud, Drive, Sincronizar, Exportar, Importar, Terminar sessão) numa única fila ao lado, com a hora de sincronização e a conta ativa por baixo. Em ecrãs mais estreitos a barra ajusta-se sozinha para não cortar botões.',
+  ]},
   {v:'3.35',data:'2026-08-30',notas:[
     'Página de documentos simplificada e renomeada para "Termo de Responsabilidade": ficou só o essencial — gerar o termo (pronto a imprimir/PDF, com logo no cabeçalho) e a lista de contactos das entidades (câmaras, associações...), onde o ✉ abre o email já endereçado e com o assunto preenchido; cada um envia pelo seu próprio email e anexa o que precisar. O carregamento de documentos para a Drive e o envio com links foram removidos, para não criar complicações. O botão no Dashboard chama-se agora "Termo Resp." e tem o mesmo tamanho do seletor de ano.',
   ]},
@@ -4061,52 +4059,49 @@ function initDocumentos(){
 }
 function dataPT(s){return s&&s.length>=10?s.slice(8,10)+'/'+s.slice(5,7)+'/'+s.slice(0,4):(s||'');}
 function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-/* Contactos guardados (nome + email) — lista simples, criada uma vez e sempre à mão */
-function docContactos(){try{const r=JSON.parse(localStorage.getItem(lsKey('rv_doc_contactos'))||'null');return Array.isArray(r)?r:[];}catch(e){return[];}}
-function saveDocContactos(l){try{localStorage.setItem(lsKey('rv_doc_contactos'),JSON.stringify(l));}catch(e){}}
+/* Contactos por feira/evento: a lista vem das feiras já criadas (cada NOME aparece uma
+   vez, seja de que ano for — sem repetir edições). Para cada uma guarda-se o email (para
+   enviar com um clique) e o telemóvel (só para consulta). Guardado por nome de feira,
+   por isso a edição de 2027 herda automaticamente o contacto preenchido em 2026. */
+function docContactosFeira(){try{return JSON.parse(localStorage.getItem(lsKey('rv_doc_contactos_feira'))||'{}')||{};}catch(e){return{};}}
+function saveDocContactosFeira(m){try{localStorage.setItem(lsKey('rv_doc_contactos_feira'),JSON.stringify(m));}catch(e){}}
 function renderContactos(){
   const area=document.getElementById('doc-contactos-lista');if(!area)return;
-  const l=docContactos();
-  area.innerHTML=l.length?l.map((c,i)=>`
-    <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg);border:.5px solid var(--border);border-radius:var(--radius);margin-bottom:6px">
-      <i class="ti ti-building-community" style="color:var(--text3)"></i>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(c.nome)}</div>
-        <div style="font-size:10px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(c.email)}</div>
-      </div>
-      <button class="btn btn-sm btn-icon" title="Escrever email a ${escHtml(c.nome)}" onclick="emailContacto(${i})" style="color:var(--teal);background:var(--teal-l);border-color:var(--teal-l)"><i class="ti ti-mail-forward" style="font-size:12px"></i></button>
-      <button class="btn btn-sm btn-icon btn-edit" title="Editar" onclick="editarContacto(${i})"><i class="ti ti-pencil" style="font-size:12px"></i></button>
-      <button class="btn btn-sm btn-icon btn-del" title="Eliminar" onclick="removerContacto(${i})"><i class="ti ti-trash" style="font-size:12px"></i></button>
-    </div>`).join(''):'<div class="empty">Sem contactos guardados — usa "Novo contacto"</div>';
+  const vistos=new Set();
+  const nomes=fairs.filter(f=>f.nome)
+    .sort((a,b)=>String(b.ano).localeCompare(String(a.ano))||a.nome.localeCompare(b.nome))
+    .filter(f=>{const k=f.nome.trim();if(vistos.has(k))return false;vistos.add(k);return true;})
+    .map(f=>f.nome.trim())
+    .sort((a,b)=>a.localeCompare(b));
+  if(!nomes.length){area.innerHTML='<div class="empty">Ainda não há feiras/eventos criados</div>';return;}
+  const m=docContactosFeira();
+  area.innerHTML=nomes.map(nome=>{
+    const c=m[nome]||{};
+    const enc=encodeURIComponent(nome);
+    return`<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg);border:.5px solid var(--border);border-radius:var(--radius);margin-bottom:6px;flex-wrap:wrap">
+      <i class="ti ti-building-carousel" style="color:var(--text3)"></i>
+      <div style="flex:1 1 150px;min-width:120px;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(nome)}">${escHtml(nome)}</div>
+      <input type="email" placeholder="email da entidade" value="${escHtml(c.email||'')}" onchange="guardarContactoFeira('${enc}','email',this.value)" style="flex:1 1 170px;min-width:140px;font-size:11px;padding:5px 8px;border-radius:var(--radius);border:.5px solid var(--border2)">
+      <input type="tel" placeholder="telemóvel" value="${escHtml(c.tel||'')}" onchange="guardarContactoFeira('${enc}','tel',this.value)" style="flex:0 1 110px;min-width:90px;font-size:11px;padding:5px 8px;border-radius:var(--radius);border:.5px solid var(--border2)">
+      <button class="btn btn-sm btn-icon" title="Escrever email" onclick="emailContactoFeira('${enc}')" style="color:var(--teal);background:var(--teal-l);border-color:var(--teal-l)"><i class="ti ti-mail-forward" style="font-size:12px"></i></button>
+    </div>`;
+  }).join('');
 }
-function novoContacto(){
-  const nome=prompt('Nome da entidade (ex.: Câmara Municipal de Barcelos):');
-  if(!nome||!nome.trim())return;
-  const email=prompt('Email de '+nome.trim()+':');
-  if(!email||!email.trim())return;
-  const l=docContactos();l.push({nome:nome.trim(),email:email.trim()});saveDocContactos(l);
-  renderContactos();
-  showSyncStatus('Contacto guardado!',true);
+function guardarContactoFeira(nomeEnc,campo,valor){
+  const nome=decodeURIComponent(nomeEnc);
+  const m=docContactosFeira();
+  m[nome]=m[nome]||{};
+  m[nome][campo]=String(valor||'').trim();
+  saveDocContactosFeira(m);
+  showSyncStatus('Contacto de "'+nome+'" guardado!',true);
 }
-function editarContacto(i){
-  const l=docContactos();if(!l[i])return;
-  const nome=prompt('Nome da entidade:',l[i].nome);
-  if(!nome||!nome.trim())return;
-  const email=prompt('Email de '+nome.trim()+':',l[i].email);
-  if(!email||!email.trim())return;
-  l[i]={nome:nome.trim(),email:email.trim()};saveDocContactos(l);renderContactos();
+function emailContactoFeira(nomeEnc){
+  const nome=decodeURIComponent(nomeEnc);
+  const c=docContactosFeira()[nome];
+  if(!c||!c.email){alert('Preenche primeiro o email desta feira (fica logo guardado).');return;}
+  location.href='mailto:'+encodeURIComponent(c.email)+'?subject='+encodeURIComponent('Documentação — '+nome);
 }
-function removerContacto(i){
-  const l=docContactos();if(!l[i])return;
-  if(!confirm(`Eliminar o contacto "${l[i].nome}"?`))return;
-  l.splice(i,1);saveDocContactos(l);renderContactos();
-}
-function emailContacto(i){
-  const c=docContactos()[i];if(!c)return;
-  const f=fairs.find(x=>x.id===docFeiraSel);
-  const assunto=f?('Documentação — '+f.nome):'Documentação';
-  location.href='mailto:'+encodeURIComponent(c.email)+'?subject='+encodeURIComponent(assunto);
-}
+
 function gerarTermo(){
   const f=fairs.find(x=>x.id===docFeiraSel);
   if(!f){alert('Escolhe primeiro a feira/evento.');return;}
@@ -4838,6 +4833,10 @@ async function enterApp(session){
   // a olhar para os dados de uma conta pensando que é outra ("os dados desapareceram!").
   const contaLbl=document.getElementById('contaAtivaLabel'); if(contaLbl)contaLbl.textContent='👤 '+(currentUser.email||'');
   const contaLblM=document.getElementById('contaAtivaLabelMobile'); if(contaLblM)contaLblM.textContent='👤 '+(currentUser.email||'');
+  // Versão da app sempre visível junto à hora de sincronização e à conta ativa —
+  // dá para confirmar num relance se o aparelho já está na atualização mais recente.
+  const verLbl=document.getElementById('appVersaoLabel'); if(verLbl)verLbl.textContent='Versão '+APP_VERSION+' ('+dataPT(APP_UPDATE_DATE)+')';
+  const verLblM=document.getElementById('appVersaoLabelMobile'); if(verLblM)verLblM.textContent='Versão '+APP_VERSION;
   loadBusinessName();
   renderVersionCard();
   renderMinhaValidade();
