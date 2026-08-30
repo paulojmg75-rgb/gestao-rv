@@ -518,7 +518,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   <div class="mobile-more-item" data-page="relatorio"><i class="ti ti-chart-bar"></i><span>Relatório</span></div>
   <div class="mobile-more-item" data-page="comparar"><i class="ti ti-arrows-left-right"></i><span>Comparar</span></div>
   <div class="mobile-more-item" data-page="configuracoes"><i class="ti ti-settings"></i><span>Configurações</span></div>
-  <div class="drive-more-item" onclick="closeMobileMore();abrirDocumentos(null)"><i class="ti ti-file-text"></i><span>Documentos da feira</span></div>
+  <div class="drive-more-item" onclick="closeMobileMore();abrirDocumentos(null)"><i class="ti ti-file-text"></i><span>Termo de Responsabilidade</span></div>
   <div class="drive-more-item" onclick="closeMobileMore();syncLocalToCloud()"><i class="ti ti-cloud-up"></i><span>Enviar dados locais → cloud</span></div>
   <div class="drive-more-item" onclick="closeMobileMore();gdriveConnectInteractive()"><i class="ti ti-brand-google-drive"></i><span>Ligar Google Drive</span></div>
   <div class="drive-more-item" onclick="closeMobileMore();loadAllFromCloud()"><i class="ti ti-refresh"></i><span>Sincronizar agora</span></div>
@@ -535,7 +535,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
       <div style="display:flex;align-items:center;gap:8px">
         <label style="font-size:12px;color:var(--text2);font-weight:500">Ano:</label>
         <select id="dashYear" onchange="renderDashboard()" style="padding:6px 10px;font-size:13px;font-weight:600;border-radius:var(--radius);border:.5px solid var(--border2);background:var(--bg2);color:var(--text)"></select>
-        <button class="btn btn-sm" onclick="abrirDocumentos(null)" title="Termo de responsabilidade e documentos por feira" style="color:var(--amber);border-color:var(--amber-l);background:linear-gradient(135deg,var(--amber-l),#fff)"><i class="ti ti-file-text"></i> Documentos</button>
+        <button class="btn" onclick="abrirDocumentos(null)" title="Gerar o Termo de Responsabilidade de uma feira/evento" style="padding:6px 10px;font-size:13px;font-weight:600;color:var(--amber);border-color:var(--amber-l);background:linear-gradient(135deg,var(--amber-l),#fff)"><i class="ti ti-file-text"></i> Termo Resp.</button>
       </div>
       <div id="dash-result-mobile" class="only-mobile"></div>
     </div>
@@ -831,13 +831,21 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   </div>
 </div>
 
-<!-- DOCUMENTOS DA FEIRA -->
+<!-- TERMO DE RESPONSABILIDADE -->
 <div class="page" id="page-documentos">
   <div class="page-header">
-    <div><h1>Documentos</h1><p>Termo de responsabilidade e documentos por feira/evento — guardados na tua Google Drive, acessíveis em qualquer aparelho</p></div>
+    <div><h1>Termo de Responsabilidade</h1><p>Gera o termo já preenchido com a feira/evento escolhida — imprime ou guarda em PDF e envia pelo teu email</p></div>
     <div class="form-group" style="margin:0;min-width:220px"><label class="form-label">Feira / Evento</label>
-      <select id="doc-feira" onchange="docFeiraSel=parseInt(this.value)||null;renderDocLista()"></select>
+      <select id="doc-feira" onchange="docFeiraSel=parseInt(this.value)||null"></select>
     </div>
+  </div>
+
+  <div class="card" style="padding:1rem;margin-bottom:1rem">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+      <span class="card-title" style="margin-bottom:0"><i class="ti ti-file-text"></i> Gerar o termo</span>
+      <button class="btn btn-primary" onclick="gerarTermo()"><i class="ti ti-printer"></i> Gerar / Imprimir termo</button>
+    </div>
+    <div style="font-size:10px;color:var(--text3)">Escolhe a feira acima e carrega em Gerar — abre pronto a imprimir, com o teu logo no cabeçalho. Na janela de imprimir podes "Guardar como PDF" para enviar por email. Depois de impresso, é só assinar.</div>
   </div>
 
   <div class="card" style="padding:1rem;margin-bottom:1rem">
@@ -860,41 +868,16 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
     </div>
   </div>
 
-  <div class="card" style="padding:1rem;margin-bottom:1rem">
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:4px">
-      <span class="card-title" style="margin-bottom:0"><i class="ti ti-files"></i> Documentos desta feira</span>
-      <div style="display:flex;gap:6px;flex-wrap:wrap">
-        <button class="btn btn-sm btn-primary" onclick="gerarTermo()" title="Gera o termo já preenchido com esta feira — na janela de imprimir podes Guardar como PDF"><i class="ti ti-file-text"></i> Gerar termo</button>
-        <button class="btn btn-sm" onclick="novoDocItem()"><i class="ti ti-plus"></i> Novo item</button>
-      </div>
-    </div>
-    <div style="font-size:10px;color:var(--text3);margin-bottom:10px">Gera o termo e guarda-o como PDF; depois carrega-o no item "Termo de responsabilidade". Cada ficheiro fica na tua Drive, na pasta desta feira.</div>
-    <div id="doc-lista"><div class="empty">Escolhe uma feira/evento acima</div></div>
-  </div>
-
   <div class="card" style="padding:1rem">
-    <div class="card-title"><i class="ti ti-mail"></i> Enviar por email (câmara, associação...)</div>
-    <div style="font-size:10px;color:var(--text3);margin-bottom:8px">Seleciona acima os documentos a incluir (✔). "Preparar email" abre o teu programa de email já escrito, com links da Drive para os documentos selecionados — só esses ficheiros ficam visíveis a quem tiver o link, o resto da Drive continua privado. Em alternativa, "Descarregar" guarda-os no aparelho para anexares à mão.</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:10px">
-      <div class="form-group" style="margin:0"><label class="form-label">Destinatário guardado</label>
-        <div style="display:flex;gap:4px">
-          <select id="doc-contacto" style="flex:1" onchange="escolherContacto()"><option value="">— Escolher —</option></select>
-          <button class="btn btn-sm btn-icon" onclick="novoContacto()" title="Adicionar destinatário (nome + email)"><i class="ti ti-plus"></i></button>
-          <button class="btn btn-sm btn-icon btn-del" onclick="removerContacto()" title="Eliminar o destinatário escolhido"><i class="ti ti-trash"></i></button>
-        </div>
-      </div>
-      <div class="form-group" style="margin:0"><label class="form-label">Email do destinatário</label><input type="email" id="doc-email-dest" placeholder="geral@cm-exemplo.pt"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:4px">
+      <span class="card-title" style="margin-bottom:0"><i class="ti ti-mail"></i> Os meus contactos (câmaras, associações...)</span>
+      <button class="btn btn-sm" onclick="novoContacto()"><i class="ti ti-plus"></i> Novo contacto</button>
     </div>
-    <div class="form-group" style="margin:0 0 10px"><label class="form-label">Texto do email (personalizável — {DESTINATARIO}, {FEIRA}, {PERIODO}, {LINKS} e {NOME} são substituídos)</label>
-      <textarea id="doc-email-tpl" rows="6" style="width:100%;font-size:12px;font-family:inherit;padding:8px;border-radius:var(--radius);border:.5px solid var(--border2);resize:vertical"></textarea>
-    </div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap">
-      <button class="btn btn-sm btn-primary" onclick="prepararEmailDocs()"><i class="ti ti-mail-forward"></i> Preparar email com links</button>
-      <button class="btn btn-sm" onclick="descarregarDocsSel()"><i class="ti ti-download"></i> Descarregar selecionados</button>
-      <button class="btn btn-sm" onclick="guardarEmailTpl()"><i class="ti ti-device-floppy"></i> Guardar texto</button>
-    </div>
+    <div style="font-size:10px;color:var(--text3);margin-bottom:10px">Guarda aqui os emails das entidades — ✉ abre o teu programa de email já com o destinatário e o assunto preenchidos; anexas o termo (e o que precisares) e envias.</div>
+    <div id="doc-contactos-lista"><div class="empty">Sem contactos guardados</div></div>
   </div>
 </div>
+
 
 <!-- RELATÓRIO -->
 <div class="page" id="page-relatorio">
@@ -2169,7 +2152,7 @@ function renderFairList(){
       <div class="fair-dot" style="background:${f.cor}"></div>
       <div class="fair-info"><div class="fair-name">${f.nome} <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:${f.tipo==='evento'?'var(--blue-l)':'var(--amber-l)'};color:${f.tipo==='evento'?'var(--blue)':'var(--amber)'}">${f.tipo==='evento'?'EVENTO':'FEIRA'}</span></div><div class="fair-dates">${f.inicio} → ${f.fim}</div></div>
       <span class="fair-days">${dias}d</span>
-      <button class="btn btn-sm btn-icon" onclick="abrirDocumentos(${f.id})" title="Documentos desta feira (termo de responsabilidade, seguros, inspeção...)" style="color:var(--amber);background:var(--amber-l);border-color:var(--amber-l)"><i class="ti ti-file-text" style="font-size:12px"></i></button>
+      <button class="btn btn-sm btn-icon" onclick="abrirDocumentos(${f.id})" title="Gerar o Termo de Responsabilidade desta feira" style="color:var(--amber);background:var(--amber-l);border-color:var(--amber-l)"><i class="ti ti-file-text" style="font-size:12px"></i></button>
       <button class="btn btn-sm btn-icon" onclick="duplicateFair(${f.id})" title="Repetir esta feira/evento noutro ano (o ano vem sugerido, mas podes escolher qualquer um)" style="color:var(--teal);background:var(--teal-l);border-color:var(--teal-l)"><i class="ti ti-copy" style="font-size:12px"></i></button>
       <button class="btn btn-sm btn-icon btn-edit" onclick="editFair(${f.id})" title="Editar feira"><i class="ti ti-pencil" style="font-size:12px"></i></button>
       <button class="btn btn-sm btn-icon btn-del" onclick="deleteFair(${f.id})" title="Remover feira"><i class="ti ti-trash" style="font-size:12px"></i></button>
@@ -3107,9 +3090,12 @@ let currentUser=null;
    Atualiza estes dois valores sempre que publicares uma versão nova do index.html:
    sobe o número e acrescenta um novo objeto no TOPO de APP_CHANGELOG (fica visível
    no cartão "Versão" em Configurações). */
-const APP_VERSION='3.34';
+const APP_VERSION='3.35';
 const APP_UPDATE_DATE='2026-08-30'; // formato AAAA-MM-DD
 const APP_CHANGELOG=[
+  {v:'3.35',data:'2026-08-30',notas:[
+    'Página de documentos simplificada e renomeada para "Termo de Responsabilidade": ficou só o essencial — gerar o termo (pronto a imprimir/PDF, com logo no cabeçalho) e a lista de contactos das entidades (câmaras, associações...), onde o ✉ abre o email já endereçado e com o assunto preenchido; cada um envia pelo seu próprio email e anexa o que precisar. O carregamento de documentos para a Drive e o envio com links foram removidos, para não criar complicações. O botão no Dashboard chama-se agora "Termo Resp." e tem o mesmo tamanho do seletor de ano.',
+  ]},
   {v:'3.34',data:'2026-08-30',notas:[
     'O termo de responsabilidade e a folha de impressão dos Filtros passaram a ter cabeçalho com o logo da empresa (o mesmo que está na barra da app) e nome do negócio, e rodapé com os dados do declarante (nome, morada, NIF) e a data — com aspeto de documento oficial, tanto em papel como em PDF.',
   ]},
@@ -4044,61 +4030,19 @@ function imprimirFiltros(){
   setTimeout(()=>{try{w.print();}catch(e){}},400);
 }
 
-/* ---- DOCUMENTOS DA FEIRA ---- */
-/* Termo de responsabilidade gerado automaticamente a partir da feira escolhida + documentos
-   (ficha de inspeção, seguros, etc.) guardados na Google Drive numa pasta por feira
-   (GestaoNegocio/Documentos/<nome da feira> [id]) — por isso o que se carrega no PC
-   vê-se também no telemóvel. Itens personalizáveis; envio por email com links da Drive
-   (só os ficheiros escolhidos ficam visíveis por link) ou descarregando para anexar à mão. */
+/* ---- TERMO DE RESPONSABILIDADE ---- */
+/* Gera o termo já preenchido com a feira escolhida (nome e período vêm da própria feira;
+   os dados do declarante preenchem-se uma vez e ficam guardados; o texto é personalizável).
+   Inclui uma lista de contactos (câmaras, associações...) para abrir o email já endereçado —
+   o envio e os anexos fazem-se no programa de email de cada um, sem complicações. */
 let docFeiraSel=null;
-const DOC_ITENS_DEF=['Termo de responsabilidade','Ficha de inspeção do divertimento','Seguro de responsabilidade civil','Seguro de acidentes pessoais'];
 const TERMO_TPL_DEF='TERMO DE RESPONSABILIDADE\n\nNome: {NOME}\nNa qualidade de: {QUALIDADE}\nCom Sede/Morada: {MORADA}\nNIF: {NIF}\n\nDeclaro a conformidade, bem como a sua correta instalação e colocação em funcionamento de acordo com as normas técnicas de segurança aplicáveis, do seguinte equipamento de diversão:\n\n>> {EQUIPAMENTO}\n\nMais declaro que o equipamento referido se destina a ser utilizado em {FEIRA}, no período de {INICIO} a {FIM}.\n\nAos {DATA}\n\n\n_________________________________\n{NOME}';
-const EMAIL_TPL_DEF='Exmos. Senhores,\n\nJunto envio a documentação relativa à participação em {FEIRA} ({PERIODO}):\n\n{LINKS}\n\nQualquer esclarecimento adicional, estou ao dispor.\n\nCom os melhores cumprimentos,\n{NOME}';
-function docItens(){try{const r=JSON.parse(localStorage.getItem(lsKey('rv_doc_itens'))||'null');return Array.isArray(r)&&r.length?r:DOC_ITENS_DEF.slice();}catch(e){return DOC_ITENS_DEF.slice();}}
-function saveDocItens(l){try{localStorage.setItem(lsKey('rv_doc_itens'),JSON.stringify(l));}catch(e){}}
 function getDeclarante(){try{return JSON.parse(localStorage.getItem(lsKey('rv_declarante'))||'{}')||{};}catch(e){return{};}}
 function getTermoTpl(){try{return localStorage.getItem(lsKey('rv_termo_tpl'))||TERMO_TPL_DEF;}catch(e){return TERMO_TPL_DEF;}}
-function getEmailTpl(){try{return localStorage.getItem(lsKey('rv_email_tpl'))||EMAIL_TPL_DEF;}catch(e){return EMAIL_TPL_DEF;}}
 function guardarDeclarante(){
   const d={nome:document.getElementById('dec-nome').value.trim(),qualidade:document.getElementById('dec-qualidade').value.trim(),morada:document.getElementById('dec-morada').value.trim(),nif:document.getElementById('dec-nif').value.trim(),equipamento:document.getElementById('dec-equipamento').value.trim()};
   try{localStorage.setItem(lsKey('rv_declarante'),JSON.stringify(d));localStorage.setItem(lsKey('rv_termo_tpl'),document.getElementById('doc-termo-tpl').value);}catch(e){}
   showSyncStatus('Dados do termo guardados!',true);
-}
-function guardarEmailTpl(){
-  try{localStorage.setItem(lsKey('rv_email_tpl'),document.getElementById('doc-email-tpl').value);}catch(e){}
-  showSyncStatus('Texto do email guardado!',true);
-}
-/* Destinatários guardados (nome + email): cria-se uma vez "Câmara de Barcelos — geral@..."
-   e depois é só escolher no menu — o email e o nome entram sozinhos no envio. */
-function docContactos(){try{const r=JSON.parse(localStorage.getItem(lsKey('rv_doc_contactos'))||'null');return Array.isArray(r)?r:[];}catch(e){return[];}}
-function saveDocContactos(l){try{localStorage.setItem(lsKey('rv_doc_contactos'),JSON.stringify(l));}catch(e){}}
-function renderContactos(sel){
-  const s=document.getElementById('doc-contacto');if(!s)return;
-  s.innerHTML='<option value="">— Escolher —</option>'+docContactos().map((c,i)=>`<option value="${i}"${sel===i?' selected':''}>${escHtml(c.nome)}</option>`).join('');
-}
-function escolherContacto(){
-  const i=parseInt(document.getElementById('doc-contacto').value);
-  const c=docContactos()[i];
-  if(c)document.getElementById('doc-email-dest').value=c.email||'';
-}
-function novoContacto(){
-  const nome=prompt('Nome do destinatário (ex.: Câmara Municipal de Barcelos):');
-  if(!nome||!nome.trim())return;
-  const email=prompt('Email de '+nome.trim()+':');
-  if(!email||!email.trim())return;
-  const l=docContactos();l.push({nome:nome.trim(),email:email.trim()});saveDocContactos(l);
-  renderContactos(l.length-1);
-  document.getElementById('doc-email-dest').value=email.trim();
-  showSyncStatus('Destinatário guardado!',true);
-}
-function removerContacto(){
-  const s=document.getElementById('doc-contacto');
-  const i=parseInt(s.value);
-  const l=docContactos();
-  if(isNaN(i)||!l[i]){alert('Escolhe primeiro o destinatário a eliminar.');return;}
-  if(!confirm(`Eliminar o destinatário "${l[i].nome}"?`))return;
-  l.splice(i,1);saveDocContactos(l);renderContactos();
-  document.getElementById('doc-email-dest').value='';
 }
 function reporTermoTpl(){document.getElementById('doc-termo-tpl').value=TERMO_TPL_DEF;showSyncStatus('Texto original reposto (carrega em Guardar para fixar)',true);}
 function abrirDocumentos(fid){docFeiraSel=fid||docFeiraSel;navTo('documentos');}
@@ -4113,121 +4057,55 @@ function initDocumentos(){
   document.getElementById('dec-nif').value=d.nif||'';
   document.getElementById('dec-equipamento').value=d.equipamento||'';
   document.getElementById('doc-termo-tpl').value=getTermoTpl();
-  document.getElementById('doc-email-tpl').value=getEmailTpl();
   renderContactos();
-  renderDocLista();
 }
 function dataPT(s){return s&&s.length>=10?s.slice(8,10)+'/'+s.slice(5,7)+'/'+s.slice(0,4):(s||'');}
 function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-/* Pasta desta feira na Drive: GestaoNegocio/Documentos/<nome> [id] — o [id] no nome permite
-   reencontrá-la mesmo que a feira seja renomeada depois. */
-async function docPastaFeira(f){
-  const docsRoot=await gdriveGetSubfolder('Documentos');
-  const marca='['+f.id+']';
-  const q=encodeURIComponent(`name contains '${marca}' and mimeType='application/vnd.google-apps.folder' and '${docsRoot}' in parents and trashed=false`);
-  const res=await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}`,{headers:{'Authorization':'Bearer '+gdriveToken}});
-  const data=await res.json();
-  if(data.files&&data.files.length)return data.files[0].id;
-  return gdriveFindOrCreateFolder(f.nome+' '+marca,docsRoot);
+/* Contactos guardados (nome + email) — lista simples, criada uma vez e sempre à mão */
+function docContactos(){try{const r=JSON.parse(localStorage.getItem(lsKey('rv_doc_contactos'))||'null');return Array.isArray(r)?r:[];}catch(e){return[];}}
+function saveDocContactos(l){try{localStorage.setItem(lsKey('rv_doc_contactos'),JSON.stringify(l));}catch(e){}}
+function renderContactos(){
+  const area=document.getElementById('doc-contactos-lista');if(!area)return;
+  const l=docContactos();
+  area.innerHTML=l.length?l.map((c,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg);border:.5px solid var(--border);border-radius:var(--radius);margin-bottom:6px">
+      <i class="ti ti-building-community" style="color:var(--text3)"></i>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(c.nome)}</div>
+        <div style="font-size:10px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(c.email)}</div>
+      </div>
+      <button class="btn btn-sm btn-icon" title="Escrever email a ${escHtml(c.nome)}" onclick="emailContacto(${i})" style="color:var(--teal);background:var(--teal-l);border-color:var(--teal-l)"><i class="ti ti-mail-forward" style="font-size:12px"></i></button>
+      <button class="btn btn-sm btn-icon btn-edit" title="Editar" onclick="editarContacto(${i})"><i class="ti ti-pencil" style="font-size:12px"></i></button>
+      <button class="btn btn-sm btn-icon btn-del" title="Eliminar" onclick="removerContacto(${i})"><i class="ti ti-trash" style="font-size:12px"></i></button>
+    </div>`).join(''):'<div class="empty">Sem contactos guardados — usa "Novo contacto"</div>';
 }
-async function uploadToGDrivePasta(fileData,fileName,mimeType,folderId){
-  const base64Data=fileData.split(',')[1];
-  const byteChars=atob(base64Data);
-  const byteArr=new Uint8Array(byteChars.length);
-  for(let i=0;i<byteChars.length;i++)byteArr[i]=byteChars.charCodeAt(i);
-  const blob=new Blob([byteArr],{type:mimeType});
-  const form=new FormData();
-  form.append('metadata',new Blob([JSON.stringify({name:fileName,parents:[folderId]})],{type:'application/json'}));
-  form.append('file',blob);
-  const res=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{method:'POST',headers:{'Authorization':'Bearer '+gdriveToken},body:form});
-  const up=await res.json();
-  return up.id;
-}
-function renderDocLista(){
-  const area=document.getElementById('doc-lista');
-  if(!area)return;
-  const f=fairs.find(x=>x.id===docFeiraSel);
-  if(!f){area.innerHTML='<div class="empty">Escolhe uma feira/evento acima</div>';return;}
-  if(!gdriveValid()){
-    area.innerHTML=`<div class="empty" style="padding:1rem"><i class="ti ti-brand-google-drive"></i>Os documentos ficam guardados na tua Google Drive.<br><button class="btn btn-sm btn-primary" style="margin-top:8px" onclick="gdriveAuth(()=>renderDocLista())"><i class="ti ti-brand-google-drive"></i> Ligar Google Drive</button></div>`;
-    return;
-  }
-  area.innerHTML='<div class="empty">A carregar documentos da Drive...</div>';
-  gdriveAuth(async()=>{
-    try{
-      const folderId=await docPastaFeira(f);
-      const q=encodeURIComponent(`'${folderId}' in parents and trashed=false`);
-      const res=await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,mimeType)`,{headers:{'Authorization':'Bearer '+gdriveToken}});
-      const data=await res.json();
-      const ficheiros=(data.files||[]);
-      const usados=new Set();
-      const linhaFicheiro=fx=>`
-        <div style="display:flex;align-items:center;gap:8px;padding:4px 0 4px 26px;font-size:11px">
-          <input type="checkbox" class="doc-sel" data-id="${fx.id}" data-nome="${escHtml(fx.name)}" style="accent-color:var(--accent)">
-          <i class="ti ti-file" style="color:var(--text3)"></i>
-          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(fx.name)}">${escHtml(fx.name.replace(/^\[[^\]]*\]\s*/,''))}</span>
-          <button class="btn btn-sm btn-icon" title="Ver na Drive" onclick="window.open('https://drive.google.com/file/d/${fx.id}/view','_blank')"><i class="ti ti-eye" style="font-size:11px"></i></button>
-          <button class="btn btn-sm btn-icon btn-del" title="Apagar da Drive" onclick="apagarDocFicheiro('${fx.id}')"><i class="ti ti-trash" style="font-size:11px"></i></button>
-        </div>`;
-      let html='';
-      docItens().forEach(item=>{
-        const doItem=ficheiros.filter(x=>x.name.startsWith('['+item+']'));
-        doItem.forEach(x=>usados.add(x.id));
-        const eDefeito=DOC_ITENS_DEF.includes(item);
-        html+=`<div style="border:.5px solid var(--border);border-radius:var(--radius);padding:8px 10px;margin-bottom:8px;background:var(--bg)">
-          <div style="display:flex;align-items:center;gap:8px">
-            <i class="ti ${doItem.length?'ti-circle-check':'ti-circle'}" style="color:${doItem.length?'var(--teal)':'var(--text3)'};font-size:15px"></i>
-            <span style="flex:1;font-size:12px;font-weight:600">${escHtml(item)}</span>
-            <button class="btn btn-sm" onclick="carregarDocFicheiro('${encodeURIComponent(item)}')"><i class="ti ti-upload" style="font-size:11px"></i> Carregar</button>
-            ${eDefeito?'':`<button class="btn btn-sm btn-icon btn-del" title="Eliminar este item da lista" onclick="removerDocItem('${encodeURIComponent(item)}')"><i class="ti ti-trash" style="font-size:11px"></i></button>`}
-          </div>
-          ${doItem.map(linhaFicheiro).join('')}
-        </div>`;
-      });
-      const outros=ficheiros.filter(x=>!usados.has(x.id));
-      if(outros.length)html+=`<div style="border:.5px dashed var(--border2);border-radius:var(--radius);padding:8px 10px;background:var(--bg)"><div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:2px">Outros ficheiros na pasta desta feira</div>${outros.map(linhaFicheiro).join('')}</div>`;
-      area.innerHTML=html||'<div class="empty">Sem itens — usa "Novo item"</div>';
-    }catch(e){console.error('Documentos:',e);area.innerHTML='<div class="empty">Não foi possível ler a Drive — tenta novamente</div>';}
-  });
-}
-function carregarDocFicheiro(itemEnc){
-  const item=decodeURIComponent(itemEnc);
-  const inp=document.createElement('input');
-  inp.type='file';inp.accept='.pdf,image/*,.doc,.docx';
-  inp.onchange=e=>{
-    const file=e.target.files[0];if(!file)return;
-    const rd=new FileReader();
-    rd.onload=()=>{
-      showSyncStatus('A enviar "'+file.name+'" para a Drive...',true);
-      gdriveAuth(async()=>{
-        try{
-          const f=fairs.find(x=>x.id===docFeiraSel);if(!f)return;
-          const folderId=await docPastaFeira(f);
-          await uploadToGDrivePasta(rd.result,'['+item+'] '+file.name,file.type||'application/octet-stream',folderId);
-          showSyncStatus('Documento guardado na Drive! ✓',true);
-          renderDocLista();
-        }catch(err){console.error(err);showSyncStatus('Falha ao enviar para a Drive',false);}
-      });
-    };
-    rd.readAsDataURL(file);
-  };
-  inp.click();
-}
-function apagarDocFicheiro(fileId){
-  if(!confirm('Apagar este documento da Drive?'))return;
-  gdriveDeleteFile(fileId).then(()=>{showSyncStatus('Documento apagado.',true);renderDocLista();}).catch(()=>showSyncStatus('Falha ao apagar na Drive',false));
-}
-function novoDocItem(){
-  const nome=prompt('Nome do novo item (ex.: Licença de ruído):');
+function novoContacto(){
+  const nome=prompt('Nome da entidade (ex.: Câmara Municipal de Barcelos):');
   if(!nome||!nome.trim())return;
-  const l=docItens();
-  if(l.includes(nome.trim()))return;
-  l.push(nome.trim());saveDocItens(l);renderDocLista();
+  const email=prompt('Email de '+nome.trim()+':');
+  if(!email||!email.trim())return;
+  const l=docContactos();l.push({nome:nome.trim(),email:email.trim()});saveDocContactos(l);
+  renderContactos();
+  showSyncStatus('Contacto guardado!',true);
 }
-function removerDocItem(itemEnc){
-  const item=decodeURIComponent(itemEnc);
-  if(!confirm(`Eliminar o item "${item}" da lista?\n\nOs ficheiros já carregados neste item NÃO são apagados da Drive — passam a aparecer em "Outros ficheiros".`))return;
-  saveDocItens(docItens().filter(x=>x!==item));renderDocLista();
+function editarContacto(i){
+  const l=docContactos();if(!l[i])return;
+  const nome=prompt('Nome da entidade:',l[i].nome);
+  if(!nome||!nome.trim())return;
+  const email=prompt('Email de '+nome.trim()+':',l[i].email);
+  if(!email||!email.trim())return;
+  l[i]={nome:nome.trim(),email:email.trim()};saveDocContactos(l);renderContactos();
+}
+function removerContacto(i){
+  const l=docContactos();if(!l[i])return;
+  if(!confirm(`Eliminar o contacto "${l[i].nome}"?`))return;
+  l.splice(i,1);saveDocContactos(l);renderContactos();
+}
+function emailContacto(i){
+  const c=docContactos()[i];if(!c)return;
+  const f=fairs.find(x=>x.id===docFeiraSel);
+  const assunto=f?('Documentação — '+f.nome):'Documentação';
+  location.href='mailto:'+encodeURIComponent(c.email)+'?subject='+encodeURIComponent(assunto);
 }
 function gerarTermo(){
   const f=fairs.find(x=>x.id===docFeiraSel);
@@ -4266,58 +4144,7 @@ function gerarTermo(){
   w.document.close();w.focus();
   setTimeout(()=>{try{w.print();}catch(e){}},400);
 }
-function docsSelecionados(){
-  return Array.from(document.querySelectorAll('.doc-sel:checked')).map(c=>({id:c.dataset.id,nome:c.dataset.nome}));
-}
-async function prepararEmailDocs(){
-  const sel=docsSelecionados();
-  if(!sel.length){alert('Seleciona (✔) pelo menos um documento na lista acima.');return;}
-  const f=fairs.find(x=>x.id===docFeiraSel);if(!f)return;
-  if(!confirm(sel.length+' documento(s) vão ficar acessíveis a quem tiver o link (só estes ficheiros — o resto da Drive continua privado).\n\nContinuar?'))return;
-  showSyncStatus('A preparar links de partilha...',true);
-  gdriveAuth(async()=>{
-    try{
-      const links=[];
-      for(const s of sel){
-        await fetch(`https://www.googleapis.com/drive/v3/files/${s.id}/permissions`,{
-          method:'POST',headers:{'Authorization':'Bearer '+gdriveToken,'Content-Type':'application/json'},
-          body:JSON.stringify({role:'reader',type:'anyone'})
-        });
-        const r=await fetch(`https://www.googleapis.com/drive/v3/files/${s.id}?fields=webViewLink`,{headers:{'Authorization':'Bearer '+gdriveToken}});
-        const j=await r.json();
-        links.push('• '+s.nome.replace(/^\[[^\]]*\]\s*/,'')+': '+(j.webViewLink||('https://drive.google.com/file/d/'+s.id+'/view')));
-      }
-      const d=getDeclarante();
-      const iC=parseInt(document.getElementById('doc-contacto').value);
-      const contacto=docContactos()[iC];
-      const corpo=(document.getElementById('doc-email-tpl').value||EMAIL_TPL_DEF)
-        .replaceAll('{DESTINATARIO}',contacto?contacto.nome:'')
-        .replaceAll('{FEIRA}',f.nome).replaceAll('{PERIODO}',dataPT(f.inicio)+' a '+dataPT(f.fim))
-        .replaceAll('{LINKS}',links.join('\n')).replaceAll('{NOME}',d.nome||'');
-      const dest=document.getElementById('doc-email-dest').value.trim()||(contacto?contacto.email:'');
-      const assunto='Documentação — '+f.nome;
-      location.href='mailto:'+encodeURIComponent(dest)+'?subject='+encodeURIComponent(assunto)+'&body='+encodeURIComponent(corpo);
-      showSyncStatus('Email preparado — verifica o teu programa de email',true);
-    }catch(e){console.error(e);showSyncStatus('Falha ao preparar os links',false);}
-  });
-}
-function descarregarDocsSel(){
-  const sel=docsSelecionados();
-  if(!sel.length){alert('Seleciona (✔) pelo menos um documento na lista acima.');return;}
-  showSyncStatus('A descarregar '+sel.length+' documento(s)...',true);
-  gdriveAuth(async()=>{
-    for(const s of sel){
-      try{
-        const dataUrl=await gdriveDownloadFile(s.id);
-        const a=document.createElement('a');
-        a.href=dataUrl;a.download=s.nome.replace(/^\[[^\]]*\]\s*/,'');
-        document.body.appendChild(a);a.click();a.remove();
-        await new Promise(r=>setTimeout(r,400));
-      }catch(e){console.error('Download falhou',s.nome,e);}
-    }
-    showSyncStatus('Documentos descarregados — vê a pasta de Transferências',true);
-  });
-}
+
 
 /* ---- GOOGLE DRIVE ---- */
 function gdriveValid(){ return gdriveToken && Date.now()<gdriveTokenExpiry; }
