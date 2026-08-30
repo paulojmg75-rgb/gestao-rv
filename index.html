@@ -391,14 +391,16 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   .nav-row{flex-direction:column!important;align-items:stretch!important;gap:6px!important}
   .nav-row .nav-item{justify-content:flex-start!important}
   /* Botões coloridos: cada item mantém a sua cor (--ac/--ac-l), com contorno e fundo tintado */
-  .nav-item{height:46px!important;border:1.5px solid var(--ac,var(--border2))!important;background:linear-gradient(135deg,var(--ac-l,#fff) 0%,#fff 90%)!important;border-radius:14px!important;font-size:13px!important;padding:10px 13px!important;gap:11px!important;color:var(--ink)!important;font-weight:700!important;letter-spacing:.01em;box-shadow:0 2px 5px rgba(28,25,23,.07)!important;transition:all .18s cubic-bezier(.4,0,.2,1)!important}
+  .nav-item{height:46px!important;border:1.5px solid var(--ac,var(--border2))!important;background:var(--ac-l,#fff)!important;border-radius:14px!important;font-size:13px!important;padding:10px 13px!important;gap:11px!important;color:var(--ink)!important;font-weight:700!important;letter-spacing:.01em;box-shadow:0 2px 5px rgba(28,25,23,.07)!important;transition:all .18s cubic-bezier(.4,0,.2,1)!important}
   .nav-item:hover{box-shadow:0 6px 16px -6px var(--ac,rgba(28,25,23,.3))!important;transform:translateX(3px)}
-  .nav-item i{width:29px!important;height:29px!important;font-size:16px!important;border-radius:9px!important;background:var(--ac-l,#fff)!important;color:var(--ac,var(--nav-ic))!important;box-shadow:0 1px 2px rgba(28,25,23,.08)}
+  .nav-item i{width:29px!important;height:29px!important;font-size:16px!important;border-radius:9px!important;background:#fff!important;color:var(--ac,var(--nav-ic))!important;box-shadow:0 1px 2px rgba(28,25,23,.08)}
   /* Selecionado: preenchido com a cor do próprio botão + brilho no topo, texto e ícone brancos */
   .nav-item.active{background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0) 55%),var(--ac,var(--accent))!important;border-color:var(--ac,var(--accent))!important;color:#fff!important;font-weight:800!important;box-shadow:0 7px 18px -5px var(--ac,var(--accent))!important;transform:translateX(4px)}
   .nav-item.active i{background:rgba(255,255,255,.25)!important;color:#fff!important;box-shadow:none!important}
   .topbar-actions-wrap{margin:auto 0 0!important;border-left:none!important;border-top:1px solid var(--side-line)!important;padding:12px 0 0!important;height:auto!important;align-items:stretch!important;gap:4px!important}
   .topbar-actions{justify-content:center;width:100%;gap:6px!important}
+  .topbar-actions .btn{padding:8px 0!important;border-radius:10px!important}
+  .topbar-actions-wrap .nav-sync-label{white-space:normal!important;overflow-wrap:anywhere;line-height:1.45;font-size:8.5px!important;max-width:100%}
   .nav-sync-label{text-align:center!important}
   /* Conteúdo: título grande, cartões flutuantes, números fortes */
   .main{width:auto!important}
@@ -3148,9 +3150,12 @@ let currentUser=null;
    Atualiza estes dois valores sempre que publicares uma versão nova do index.html:
    sobe o número e acrescenta um novo objeto no TOPO de APP_CHANGELOG (fica visível
    no cartão "Versão" em Configurações). */
-const APP_VERSION='3.53';
+const APP_VERSION='3.54';
 const APP_UPDATE_DATE='2026-08-31'; // formato AAAA-MM-DD
 const APP_CHANGELOG=[
+  {v:'3.54',data:'2026-08-31',notas:[
+    'Cada botão do menu lateral passou a ter a sua cor bem visível (fundo tintado sólido, ícone em chip branco). Os botões de Drive/cloud/Sincronizar/Exportar/Importar/sessão no fundo da coluna foram arrumados em filas certas a toda a largura, e a hora de sincronização, a conta e a versão deixaram de aparecer cortadas.',
+  ]},
   {v:'3.53',data:'2026-08-31',notas:[
     'Menu lateral polido: saiu o rótulo "PRINCIPAL", e os botões ficaram maiores e mais bonitos — chip de ícone colorido em cada um, sombras coloridas ao passar o rato, e o selecionado com brilho no topo e sombra da própria cor. Bloco de ações do fundo arrumado a toda a largura.',
   ]},
