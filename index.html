@@ -390,9 +390,10 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   .logo-area{flex-direction:column!important;padding:0 0 4px!important;border-bottom:1px solid var(--side-line)!important;margin-bottom:6px}
   .logo-sub{display:none!important}
   .hdr-cfg{display:none!important}
+  .hdr-termo{display:none!important}
   .logo-img-wrap{width:100px!important;height:38px!important}
   .nav-section{display:none!important}
-  .nav-rows{flex-direction:column!important;min-width:0!important;flex:0 0 auto!important;gap:12px!important}
+  .nav-rows{flex-direction:column!important;min-width:0!important;flex:0 0 auto!important;gap:12px!important;margin:auto!important;width:94%}
   .nav-row{flex-direction:column!important;align-items:stretch!important;gap:12px!important}
   .nav-row .nav-item{justify-content:flex-start!important}
   /* Botões coloridos: cada item mantém a sua cor (--ac/--ac-l), com contorno e fundo tintado */
@@ -404,6 +405,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   .nav-item[data-page="filtros"]{--ac:#C4A272!important}
   .nav-item[data-page="relatorio"]{--ac:#A08CB8!important}
   .nav-item[data-page="comparar"]{--ac:#C08B84!important}
+  .nav-item[data-page="documentos"]{--ac:#B08E6E!important}
   .nav-item[data-page="configuracoes"]{--ac:#9A8C7B!important}
   .nav-item{height:34px!important;border:none!important;background:var(--ac,var(--accent))!important;border-radius:999px!important;font-size:10.5px!important;text-transform:uppercase;letter-spacing:.05em;padding:5px 14px 5px 5px!important;gap:10px!important;color:#fff!important;font-weight:800!important;box-shadow:0 1px 2px rgba(28,25,23,.08)!important;transition:all .18s cubic-bezier(.4,0,.2,1)!important}
   .nav-item:hover{box-shadow:0 3px 8px -2px var(--ac,rgba(28,25,23,.3))!important;transform:translateX(3px)}
@@ -529,6 +531,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
       <div class="nav-item" data-page="filtros" style="--ac:var(--n8);--ac-l:var(--n8-l)"><i class="ti ti-filter"></i> Filtros</div>
       <div class="nav-item" data-page="relatorio" style="--ac:var(--n10);--ac-l:var(--n10-l)"><i class="ti ti-chart-bar"></i> Relatório</div>
       <div class="nav-item" data-page="comparar" style="--ac:var(--n3);--ac-l:var(--n3-l)"><i class="ti ti-arrows-left-right"></i> Comparar</div>
+      <div class="nav-item" data-page="documentos" style="--ac:var(--amber);--ac-l:var(--amber-l)"><i class="ti ti-file-text"></i> Termo / Contactos</div>
       <div class="nav-item nav-item-cfg-menu" data-page="configuracoes" style="--ac:var(--accent);--ac-l:var(--accent-l)"><i class="ti ti-settings"></i> Configurações</div>
     </div>
   </div>
@@ -594,7 +597,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
            iguais (definidas pelo conteúdo mais largo), no PC e no telemóvel -->
       <div class="hdr-trio">
         <select id="dashYear" onchange="renderDashboard()" title="Ano" class="hdr-btn" style="font-weight:600;border-radius:var(--radius);border:.5px solid var(--border2);background:var(--bg2);color:var(--text);text-align:center"></select>
-        <button class="btn hdr-btn" onclick="abrirDocumentos(null)" title="Termo de Responsabilidade / Contactos das Feiras" style="font-weight:600;white-space:nowrap;justify-content:center;color:var(--amber);border-color:var(--amber-l);background:linear-gradient(135deg,var(--amber-l),#fff)"><i class="ti ti-file-text"></i> Termo / Contactos</button>
+        <button class="btn hdr-btn hdr-termo" onclick="abrirDocumentos(null)" title="Termo de Responsabilidade / Contactos das Feiras" style="font-weight:600;white-space:nowrap;justify-content:center;color:var(--amber);border-color:var(--amber-l);background:linear-gradient(135deg,var(--amber-l),#fff)"><i class="ti ti-file-text"></i> Termo / Contactos</button>
         <button class="btn hdr-btn hdr-cfg" onclick="navTo('configuracoes')" title="Configurações" style="font-weight:600;white-space:nowrap;justify-content:center;color:#fff;border-color:#9C5F1F;background:linear-gradient(135deg,#C68A42,#9C5F1F)"><i class="ti ti-settings" style="color:#fff"></i> Configurações</button>
       </div>
       <div id="dash-result-mobile" class="only-mobile"></div>
@@ -3164,9 +3167,12 @@ let currentUser=null;
    Atualiza estes dois valores sempre que publicares uma versão nova do index.html:
    sobe o número e acrescenta um novo objeto no TOPO de APP_CHANGELOG (fica visível
    no cartão "Versão" em Configurações). */
-const APP_VERSION='3.60';
+const APP_VERSION='3.61';
 const APP_UPDATE_DATE='2026-08-31'; // formato AAAA-MM-DD
 const APP_CHANGELOG=[
+  {v:'3.61',data:'2026-08-31',notas:[
+    'O botão "Termo / Contactos" entrou também no menu lateral (8.º botão, tom bronze) — no PC sai do cabeçalho do Dashboard, que fica só com o Ano; no telemóvel mantém-se no cabeçalho. O bloco de botões do menu ficou centrado na vertical e na horizontal da coluna. Tudo continua sem barra de rolagem.',
+  ]},
   {v:'3.60',data:'2026-08-31',notas:[
     'Configurações entrou no menu lateral como 7.º botão (tom taupe neutro) — no PC deixa de aparecer no cabeçalho do Dashboard (no telemóvel mantém-se lá, que é o acesso). O contorno do botão selecionado ficou mais fino e em cor escura. Tudo continua a caber sem barra de rolagem.',
   ]},
